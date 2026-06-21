@@ -1,0 +1,45 @@
+name: Deploy to homeserver
+
+# Auto-deploy whenever the deploy branch advances. Push-only (never
+# pull_request) so a fork PR can't execute on the self-hosted runner.
+on:
+  push:
+    branches: [deploy]
+  workflow_dispatch: {} # allow manual re-deploys from the Actions tab
+
+# Never let two deploys build/restart at the same time; a newer push supersedes.
+concurrency:
+  group: deploy-homeserver
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & restart container
+    # Runs on the homeserver via the self-hosted runner labelled "stm-page".
+    runs-on: [self-hosted, stm-page]
+    # Defence in depth: never run on a fork of this repo.
+    if: github.repository == 'Piyakorn2112/stm-page'
+    steps:
+      - name: Checkout deploy branch
+        uses: actions/checkout@v4
+
+      - name: Build image & (re)start the stack
+        run: |
+          docker compose -f deploy/docker-compose.yml up -d --build --remove-orphans
+
+      - name: Wait for the app to answer
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose -f deploy/docker-compose.yml exec -T app \
+                 wget -q -O /dev/null http://localhost:3000/; then
+              echo "✅ app is responding"; exit 0
+            fi
+            echo "… waiting for app ($i/30)"; sleep 2
+          done
+          echo "::error::app did not become healthy in time"
+          docker compose -f deploy/docker-compose.yml logs --tail=80 app
+          exit 1
+
+      - name: Prune dangling images
+        if: always()
+        run: docker image prune -f

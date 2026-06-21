@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Self-contained production build: emits .next/standalone with a minimal
+  // server.js + only the traced node_modules, so the Docker runtime image needs
+  // no `npm install` and stays small. (Dev/`next dev` is unaffected.)
+  output: "standalone",
   // Dev StrictMode double-mounts every component, which tears down + recreates the
   // WebGL canvas on /build and shows a one-frame flash on reload (HMR is exempt, so
   // it only bit on full reloads). StrictMode is a dev-only aid and never runs in

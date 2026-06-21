@@ -1,0 +1,51 @@
+# Production deployment for the Srang Tech Mai site on the homeserver.
+#
+#   App (Next.js standalone)  ──┐
+#                               ├── private bridge net "stm-net"
+#   cloudflared (named tunnel) ─┘   routes srangtechmai.tech ─► http://app:3000
+#
+# The app publishes NO host port — the tunnel reaches it over the compose
+# network, so it never collides with other services (e.g. :3000 is already in
+# use on this box) and is not exposed on the LAN/tailnet directly.
+#
+# Run from the repo root:
+#   docker compose -f deploy/docker-compose.yml up -d --build
+name: stm-page
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: stm-page:latest
+    container_name: stm_page_app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    networks:
+      - stm-net
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: stm_page_tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+    volumes:
+      # Non-secret routing config lives in the repo …
+      - ./cloudflared-config.yml:/etc/cloudflared/config.yml:ro
+      # … the tunnel credentials (secret) + origin cert stay on the host, never
+      # in git. Override CF_CREDS_DIR if the path differs.
+      - ${CF_CREDS_DIR:-/home/piyakorn/stm-deploy/cloudflared}:/etc/cloudflared/creds:ro
+    environment:
+      TUNNEL_ORIGIN_CERT: /etc/cloudflared/creds/cert.pem
+    depends_on:
+      - app
+    networks:
+      - stm-net
+
+networks:
+  stm-net:
+    driver: bridge
+    name: stm-net

@@ -1,0 +1,17 @@
+# Cloudflare Tunnel routing for the Srang Tech Mai site.
+# tunnel id + credentials file name must match the named tunnel created with
+# `cloudflared tunnel create stm-page`. The credentials JSON (secret) is mounted
+# at /etc/cloudflared/creds and is NOT stored in this repo.
+#
+# NOTE: this tunnel id belongs to the Cloudflare account that owns the
+# `cloudflared` origin cert on the homeserver. srangtechmai.tech must live in
+# that SAME account for these public hostnames to bind (see deploy/README.md).
+tunnel: a0297817-56a5-4e1c-b517-5a61e75eefa4
+credentials-file: /etc/cloudflared/creds/a0297817-56a5-4e1c-b517-5a61e75eefa4.json
+
+ingress:
+  - hostname: srangtechmai.tech
+    service: http://app:3000
+  - hostname: www.srangtechmai.tech
+    service: http://app:3000
+  - service: http_status:404
