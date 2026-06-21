@@ -1,0 +1,972 @@
+/* ════════════════════════════════════════════════════════════════════════
+   STM company page — content area.
+   Calm white / near-black surfaces; brand primaries (indigo #5057FF, blue
+   #3B86FF, orange #FB5607) appear only as accents: eyebrows, the one emphasised
+   word per headline, product marks, and large tonal "ghost" rings that bleed
+   off section edges (echoing the brand's poster graphics, kept quiet).
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────── Layout primitives ───────────────────────── */
+.container {
+  position: relative;
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+  z-index: 1;
+}
+
+.section {
+  position: relative;
+  overflow: hidden;
+  padding-block: clamp(84px, 13vh, 168px);
+  /* Off-screen sections skip layout/paint; `auto` remembers measured size so
+     re-scrolling never jumps, and the page stays scrollable instantly. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 720px;
+}
+
+.sectionAlt {
+  background: var(--bg-soft);
+}
+
+/* Large tonal ring bleeding off an edge — brand texture, very quiet. */
+.ghost {
+  position: absolute;
+  border-radius: 50%;
+  border: clamp(28px, 5vw, 64px) solid currentColor;
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 0;
+}
+@media (prefers-color-scheme: dark) {
+  .ghost {
+    opacity: 0.1;
+  }
+}
+
+/* ───────────────────────── Type system ─────────────────────────────── */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 22px;
+}
+.eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 1.5px;
+  background: currentColor;
+}
+
+.heading {
+  font-size: clamp(2.05rem, 5vw, 3.4rem);
+  font-weight: 680;
+  line-height: 1.04;
+  letter-spacing: -0.032em;
+  color: var(--fg);
+  max-width: 17ch;
+  text-wrap: balance;
+}
+
+/* The single emphasised word per headline — the brand's signature device. */
+.accentWord {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.lede {
+  margin-top: 24px;
+  font-size: clamp(1.05rem, 1.7vw, 1.3rem);
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 56ch;
+  letter-spacing: -0.01em;
+}
+
+.body {
+  margin-top: 16px;
+  font-size: 1.02rem;
+  line-height: 1.68;
+  color: var(--muted);
+  max-width: 62ch;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+  color: var(--faint);
+}
+
+/* ── Mobile text alignment — ONE consistent rule for every content section (heroes use
+   their own classes, so they're untouched). The eyebrow + heading (short titles) centre;
+   PARAGRAPHS stay left-aligned and anchored at the container gutter, so every section's
+   text has the SAME side spacing. Section-specific blocks below only do layout (stacking,
+   placing the graphic on top) — never their own text alignment. ── */
+@media (max-width: 880px) {
+  .eyebrow {
+    display: flex;
+    justify-content: center;
+  }
+  .heading,
+  .missionHeading,
+  .headingLg {
+    text-align: center;
+    margin-inline: auto;
+  }
+  .lede,
+  .body,
+  .missionLede {
+    text-align: left;
+    margin-inline: 0;
+  }
+}
+
+/* ───────────────────────────── Nav ────────────────────────────── */
+/* Hidden over the hero; revealed (scroll past half the hero) as a translucent
+   bar over the content. */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 13px var(--gutter);
+  min-height: 57px; /* fixed bar height (matches /build) — independent of link content */
+  opacity: 0;
+  /* Reveal with opacity + margin-top (NOT transform). A `transform` on the same
+     element as `backdrop-filter` is the other thing that breaks the blur in
+     Chrome (the element gets composited and the backdrop sample fails); margin-top
+     gives the same slide-down without a transform. */
+  pointer-events: none;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  /* blur is applied via Tailwind `backdrop-blur-md` on the element (see SiteNav) */
+  border-bottom: 1px solid transparent;
+  transition: opacity 320ms ease, filter 320ms ease, margin-top 360ms ease, border-color 360ms ease;
+}
+
+.navShown {
+  opacity: 1;
+  margin-top: 0;
+  pointer-events: auto;
+  filter: blur(0px);
+  border-bottom-color: var(--border);
+}
+
+.navBrand {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg);
+}
+
+/* STM long wordmark; black artwork ⇒ invert to white on dark. */
+.navMark {
+  display: block;
+  width: 128px;
+  aspect-ratio: 806 / 127;
+  background: url("/STM%20logo%20long%20text.svg") center / contain no-repeat;
+}
+@media (prefers-color-scheme: dark) {
+  .navMark {
+    filter: invert(1);
+  }
+}
+
+/* footer brand mark (kept) */
+.navDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2.5px solid var(--accent);
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  /* roomy: leaves space for the hover-reveal icon (sits left of each label) AND the
+     small rightward shift the whole link makes on hover, so nothing ever crowds */
+  gap: clamp(40px, 4vw, 58px);
+  font-size: 0.93rem;
+  color: var(--muted);
+}
+.navLinks a:hover {
+  color: var(--fg);
+}
+.navLink {
+  position: relative; /* anchor for the hover-reveal icon */
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  /* reserve the icon's zone INSIDE the link box so the hit area spans icon→text with no
+     gap; the negative margin cancels it so the resting label position is unchanged */
+  padding-left: 23px;
+  margin-left: -23px;
+}
+/* Desktop: the icon is HIDDEN by default and scales + fades in only while the link is
+   hovered/focused. It's absolutely positioned (just left of the label) so revealing it
+   never reflows the row. Same easing as the mobile menu expand (no overshoot). */
+.navIcon {
+  position: absolute;
+  left: 0; /* within the reserved padding — leaves a comfortable gap to its label */
+  top: 50%;
+  display: inline-flex;
+  opacity: 0;
+  transform: translateY(-50%) scale(0.82); /* starts larger ⇒ a gentler scale-up on reveal */
+  transform-origin: center;
+  pointer-events: none;
+  transition: opacity 260ms cubic-bezier(0.4, 0, 0.2, 1), transform 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.navLink:hover .navIcon,
+.navLink:focus-visible .navIcon {
+  opacity: 1;
+  transform: translateY(-50%) scale(1); /* just scales up + fades in, no shift */
+}
+
+/* desktop: transparent wrapper so the brand sits directly in the nav's flex row */
+.navTop {
+  display: contents;
+}
+
+/* mobile hamburger — hidden on desktop (horizontal links shown instead) */
+.navBurger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin: -6px;
+  padding: 6px;
+  color: var(--fg);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* full-screen scrim that darkens + blurs the page behind the expanded mobile menu;
+   sits just under the nav (z 39 vs 40). Off on desktop. */
+.navScrim {
+  display: none;
+}
+
+.navCta {
+  padding: 6px 17px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--fg);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.navCta:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+
+@media (max-width: 720px) {
+  /* the bar grows in height to reveal the links (Apple-style), no popup */
+  .nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0; /* the base 24px gap would otherwise pad the collapsed bar by a whole row-gap */
+  }
+  /* the bar's top row: brand left, hamburger right — its own stable row, so the drawer
+     below never shifts the logo */
+  .navTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 31px; /* + the bar's 13px top/bottom padding ≈ 57px closed */
+  }
+  .navBurger {
+    display: inline-flex;
+  }
+  .navScrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: color-mix(in srgb, #000 28%, transparent);
+    /* blur is applied via Tailwind `backdrop-blur-[5px]` on the element — a CSS-module
+       backdrop-filter here isn't honoured by Chrome (same workaround as the nav bar) */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 360ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .navScrimShown {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  /* links become a vertical drawer below the bar row that expands open */
+  .navLinks {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 380ms cubic-bezier(0.4, 0, 0.2, 1), opacity 240ms ease,
+      padding 380ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .navOpen .navLinks {
+    max-height: 70vh;
+    opacity: 1;
+    padding-top: 14px; /* breathing room below the logo */
+    padding-bottom: 8px;
+  }
+  .navLink {
+    padding: 12px 2px;
+    margin-left: 0; /* drop the desktop icon-zone reservation */
+    font-size: 1.06rem;
+    gap: 13px;
+  }
+  /* mobile drawer keeps icons inline + always visible; neutralise the desktop hover
+     transforms so tapping a link shifts neither the icon (translateY) nor the link (translateX) */
+  .navIcon,
+  .navLink:hover .navIcon,
+  .navLink:focus-visible .navIcon {
+    position: static;
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ───────────────────────────── Hero ───────────────────────────── */
+/* A normal full-viewport section in the scroll flow; it simply scrolls away. */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ─────────────────────── Two-column split ─────────────────────── */
+.split {
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: clamp(40px, 7vw, 116px);
+  align-items: center;
+}
+
+.splitVisual {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+}
+
+@media (max-width: 880px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+  .splitVisual {
+    aspect-ratio: 16 / 10;
+    max-width: 420px;
+    margin-inline: auto;
+  }
+}
+
+/* ─────────────────── Positioning statement ────────────────────── */
+.statement {
+  max-width: 24ch;
+}
+.headingLg {
+  font-size: clamp(2.4rem, 6.2vw, 4.6rem);
+  font-weight: 660;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: var(--fg);
+  text-wrap: balance;
+}
+.statement .lede {
+  max-width: 52ch;
+  margin-top: 28px;
+}
+
+/* ─────────────────── Mission (soft-body graphic) ──────────────────── */
+/* Graphic on the LEFT, smaller text on the RIGHT; centred + stacked on mobile. */
+.missionSplit {
+  display: grid;
+  grid-template-columns: 1.12fr 0.88fr;
+  gap: clamp(36px, 7vw, 112px);
+  align-items: center;
+}
+.missionVisual {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  /* the canvas fills this box; nothing else paints here */
+}
+.missionText {
+  align-self: center;
+}
+/* Deliberately smaller than the page's .headingLg statement. */
+.missionHeading {
+  font-size: clamp(2.05rem, 5vw, 3.4rem); /* full size — same as the page's .heading */
+  font-weight: 680;
+  line-height: 1.04;
+  letter-spacing: -0.032em;
+  color: var(--fg);
+  max-width: 18ch;
+  text-wrap: balance;
+}
+.missionLede {
+  margin-top: 24px;
+  font-size: clamp(1.05rem, 1.7vw, 1.3rem); /* full size — same as the page's .lede */
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 52ch;
+  letter-spacing: -0.01em;
+}
+@media (max-width: 880px) {
+  .missionSplit {
+    grid-template-columns: 1fr;
+  }
+  .missionVisual {
+    order: -1;
+    max-width: 360px;
+    margin-inline: auto;
+  }
+}
+
+/* Faint twisted-ring decoration (the expressive form, not the base circle),
+   bleeding off a section edge. Sized/positioned inline by the caller. */
+.decorRing {
+  position: absolute;
+  z-index: 0;
+  opacity: 0.07;
+  pointer-events: none;
+}
+@media (prefers-color-scheme: dark) {
+  .decorRing {
+    opacity: 0.13;
+  }
+}
+
+/* ───────────────────── Logo-meaning section ──────────────────── */
+.meaningList {
+  list-style: none;
+  margin-top: 28px;
+  display: grid;
+  gap: 14px;
+}
+.meaningItem {
+  font-size: 1.02rem;
+  line-height: 1.5;
+  color: var(--muted);
+  padding-left: 18px;
+  border-left: 2px solid var(--border-strong);
+}
+.meaningWord {
+  color: var(--fg);
+  font-weight: 600;
+}
+.meaningRing {
+  width: min(320px, 70%);
+  aspect-ratio: 176 / 171;
+}
+
+/* ──────────────────── Identity (ring grid) ───────────────────── */
+.idSplit {
+  display: grid;
+  grid-template-columns: 1fr 0.92fr; /* text on the LEFT, ring grid on the right */
+  gap: clamp(44px, 7.5vw, 120px);
+  align-items: center;
+}
+.idText {
+  align-self: center;
+}
+/* arrow link out to the How We Work page (accent-coloured, nudges on hover) */
+.idLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  font-size: 1rem;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  color: var(--accent);
+  transition: gap 160ms ease;
+}
+.idLink:hover {
+  gap: 13px;
+}
+.idGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: clamp(10px, 1.6vw, 20px);
+}
+.idCell {
+  aspect-ratio: 176 / 171;
+  opacity: 0;
+  transform: scale(0.66);
+}
+.idGridIn .idCell {
+  opacity: 1;
+  transform: none;
+  transition: opacity 520ms ease var(--d, 0ms),
+    transform 620ms cubic-bezier(0.34, 1.4, 0.64, 1) var(--d, 0ms);
+}
+@media (max-width: 880px) {
+  .idSplit {
+    grid-template-columns: 1fr;
+  }
+  .idGridWrap {
+    order: -1; /* ring grid on TOP of the copy on mobile */
+  }
+  /* keep all 8 columns (smaller rings) and a compact width, centred above the text */
+  .idGrid {
+    grid-template-columns: repeat(8, 1fr);
+    max-width: 380px;
+    margin-inline: auto;
+  }
+}
+
+/* ───────────────────────── Product grid ──────────────────────── */
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
+  gap: 16px;
+  margin-top: 56px;
+}
+
+.productCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 26px 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 220ms ease, transform 220ms ease;
+}
+.productCard:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-4px);
+}
+/* the core product reads as the anchor */
+.productCore {
+  background: var(--fg);
+}
+.productCore .productName,
+.productCore .productDesc {
+  color: var(--bg);
+}
+.productCore .productTag {
+  color: color-mix(in srgb, var(--bg) 62%, transparent);
+}
+
+.productMark {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 5px solid currentColor;
+  margin-bottom: 22px;
+}
+
+.productName {
+  font-size: 1.32rem;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+/* per-sub-brand letterform character (hints, not the real logotypes) */
+.nMembers {
+  font-weight: 600;
+  text-transform: lowercase;
+}
+.nBeacon {
+  font-weight: 680;
+  letter-spacing: -0.035em;
+}
+.nLatent {
+  font-weight: 620;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 1.04rem;
+}
+.nCmission {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.productTag {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+}
+
+.productDesc {
+  margin-top: 16px;
+  font-size: 0.96rem;
+  line-height: 1.58;
+  color: var(--muted);
+}
+
+/* ─────────────────────── Use-case rail ───────────────────────── */
+.rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(268px, 1fr);
+  gap: 16px;
+  margin-top: 56px;
+  overflow-x: auto;
+  padding-bottom: 14px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.useCard {
+  scroll-snap-align: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.useThumb {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--useTint, var(--indigo)) 12%, var(--bg-soft));
+}
+/* tonal ring inside the thumb */
+.useThumb::after {
+  content: "";
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  right: -38px;
+  bottom: -52px;
+  border-radius: 50%;
+  border: 26px solid var(--useTint, var(--indigo));
+  opacity: 0.5;
+}
+.useThumbLabel {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--useTint, var(--indigo)) 78%, var(--fg));
+}
+
+.useBody {
+  padding: 20px 22px 24px;
+}
+.useTitle {
+  font-size: 1.08rem;
+  font-weight: 620;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+.useDesc {
+  margin-top: 8px;
+  font-size: 0.93rem;
+  line-height: 1.56;
+  color: var(--muted);
+}
+
+/* Philosophy = a full-bleed ring-environment behind the copy. The ArcField fills the
+   whole section; the text sits on top (left) and carries a reserve hitbox so the
+   icons stay out from under it. */
+.philFull {
+  position: relative;
+  min-height: clamp(560px, 88vh, 920px);
+  display: flex;
+  align-items: center;
+}
+.philArcBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.philText {
+  position: relative;
+  z-index: 1;
+  max-width: 46ch; /* matches the lava-lamp section's text column (not compressed) */
+}
+/* Mobile: still full-bleed — the text sits centred along the BOTTOM, overlapping into
+   the canvas (its hitbox keeps icons off), and the ring floats above it. */
+@media (max-width: 880px) {
+  .philFull {
+    align-items: flex-end;
+    min-height: clamp(620px, 92vh, 920px);
+    padding-bottom: clamp(28px, 7vh, 64px);
+  }
+  .philText {
+    max-width: none; /* span the gutter width like every other section */
+  }
+}
+
+/* ───────────────────────── Philosophy ────────────────────────── */
+.philList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 40px;
+  margin-top: 60px;
+}
+.philItem {
+  border-top: 2px solid var(--fg);
+  padding-top: 24px;
+}
+.philVs {
+  font-size: 1.42rem;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+.philVs em {
+  font-style: normal;
+  color: var(--faint);
+  font-weight: 400;
+}
+.philNote {
+  margin-top: 12px;
+  font-size: 0.98rem;
+  line-height: 1.62;
+  color: var(--muted);
+}
+
+/* ─────────────────── Where it takes form ─────────────────────── */
+/* A VERTICAL channel graphic sits alongside the copy (copy on the right). */
+.formSplit {
+  display: grid;
+  grid-template-columns: 0.62fr 1fr;
+  gap: clamp(32px, 6vw, 100px);
+  align-items: stretch;
+}
+.formText {
+  align-self: center;
+}
+/* Pillars as a clean list inside a softly darkened, rounded panel (no rules). */
+.formPillars {
+  margin-top: clamp(36px, 5vw, 56px);
+  max-width: 660px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: clamp(6px, 1vw, 12px) clamp(20px, 2.6vw, 34px);
+}
+.formPillar {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding-block: clamp(16px, 2.1vw, 22px);
+}
+.formPillarIcon {
+  color: var(--accent);
+  flex: none;
+  margin-top: 3px;
+}
+.formPillarTitle {
+  font-size: 1.14rem;
+  font-weight: 620;
+  letter-spacing: -0.016em;
+  color: var(--fg);
+}
+.formPillarDesc {
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+/* The vertical soft-body channel — a tall column beside the copy. */
+.formFlow {
+  position: relative;
+  width: 100%;
+  min-height: clamp(440px, 72vh, 720px);
+}
+.formFlowCanvas {
+  position: absolute;
+  inset: 0;
+}
+@media (max-width: 880px) {
+  .formSplit {
+    grid-template-columns: 1fr;
+    gap: clamp(28px, 6vw, 48px);
+  }
+  .formFlow {
+    order: -1; /* graphic on TOP on mobile */
+    min-height: clamp(380px, 56vh, 520px);
+    max-width: 420px;
+    margin-inline: auto;
+  }
+}
+
+/* ──────────────────────── Technology ─────────────────────────── */
+/* No 01/02/03 — these are parallel properties, not a sequence. */
+.techGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1px;
+  margin-top: 56px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.techCell {
+  background: var(--bg);
+  padding: 30px 28px;
+}
+.techKicker {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+.techTitle {
+  margin-top: 16px;
+  font-size: 1.1rem;
+  font-weight: 620;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+.techDesc {
+  margin-top: 9px;
+  font-size: 0.94rem;
+  line-height: 1.58;
+  color: var(--muted);
+}
+
+/* ──────────────────────────── CTA ────────────────────────────── */
+.cta {
+  position: relative;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ctaHeading {
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  font-weight: 680;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  color: var(--fg);
+  max-width: 14ch;
+}
+.ctaSub {
+  margin-top: 18px;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  color: var(--muted);
+  max-width: 44ch;
+}
+.ctaActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 36px;
+}
+.btnPrimary {
+  padding: 14px 28px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: 540;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.btnPrimary:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+.btnGhost {
+  padding: 14px 28px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--fg);
+  font-weight: 540;
+  transition: border-color 160ms ease;
+}
+.btnGhost:hover {
+  border-color: var(--accent);
+}
+
+/* ─────────────────────────── Footer ──────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding-block: 60px;
+  background: var(--bg-soft);
+}
+.footerInner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.footerBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+.footerTag {
+  margin-top: 14px;
+  font-size: 0.92rem;
+  color: var(--muted);
+  max-width: 26ch;
+}
+.footerCols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(32px, 6vw, 76px);
+}
+.footerCol {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 0.93rem;
+  color: var(--muted);
+}
+.footerColHead {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+.footerCol a:hover {
+  color: var(--fg);
+}
+.footerNote {
+  margin-top: 44px;
+  font-size: 0.82rem;
+  color: var(--faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav {
+    transition: opacity 0ms, border-color 0ms;
+    transform: none;
+  }
+  .productCard:hover,
+  .btnPrimary:hover {
+    transform: none;
+  }
+  /* identity grid: appear without the stagger */
+  .idCell {
+    opacity: 1;
+    transform: none;
+  }
+  .idGridIn .idCell {
+    transition: none;
+  }
+}
