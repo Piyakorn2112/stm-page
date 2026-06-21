@@ -29,9 +29,12 @@ jobs:
 
       - name: Wait for the app to answer
         run: |
+          # Use 127.0.0.1, not localhost: in the Alpine container `localhost`
+          # resolves to ::1 (IPv6) first, but the Next server binds IPv4 0.0.0.0,
+          # so a localhost probe gets connection-refused while the app is fine.
           for i in $(seq 1 30); do
             if docker compose -f deploy/docker-compose.yml exec -T app \
-                 wget -q -O /dev/null http://localhost:3000/; then
+                 wget -q -O /dev/null http://127.0.0.1:3000/; then
               echo "✅ app is responding"; exit 0
             fi
             echo "… waiting for app ($i/30)"; sleep 2
