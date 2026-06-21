@@ -37,23 +37,16 @@ GitHub Actions (push:deploy)  ──►  self-hosted runner on homeserver
    `<tunnel-id>.cfargotunnel.com` **in the same Cloudflare account as the tunnel**
    (see caveat below).
 
-## ⚠️ Cloudflare account caveat
+## Cloudflare account note
 
 A Cloudflare Tunnel only binds public hostnames for zones in the **same account**
-as the tunnel. `srangtechmai.tech` is on Cloudflare but in a different account
-than the homeserver's `cloudflared` origin cert (which authorizes `noboru.tech`).
-To finish public routing, do **one** of:
-
-- **API token** — provide a token for the `srangtechmai.tech` account
-  (`Zone:DNS:Edit` + `Account:Cloudflare Tunnel:Edit`); the tunnel + DNS are then
-  recreated in that account.
-- **Interactive login** — `cloudflared tunnel login`, pick the `srangtechmai.tech`
-  account; re-create the tunnel and `cloudflared tunnel route dns stm-page srangtechmai.tech`.
-- **Move the zone** — transfer `srangtechmai.tech` into the `noboru.tech`
-  Cloudflare account; the existing tunnel id then works unchanged.
-
-After resolving, update `tunnel:`/`credentials-file:` in `cloudflared-config.yml`
-if the tunnel id changed.
+as the tunnel. `srangtechmai.tech` lives in its own Cloudflare account (separate
+from the homeserver's `noboru.tech` cert), so the tunnel above
+(`adc21b2b-…`) was created **in the srangtechmai.tech account** via the Cloudflare
+API, with its credentials JSON staged at `CF_CREDS_DIR`. The `srangtechmai.tech`
+and `www` records are proxied CNAMEs to `<tunnel-id>.cfargotunnel.com` in that
+account. If the tunnel is ever recreated, update `tunnel:`/`credentials-file:`
+here and the credentials JSON on the host to match.
 
 ## Manual operations
 
