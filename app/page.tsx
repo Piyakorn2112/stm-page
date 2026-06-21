@@ -18,8 +18,6 @@ import {
   Philosophy,
   TakesForm,
   Identity,
-  ProductFamily,
-  Construction,
   CtaSection,
   SiteFooter,
 } from "./components/site/Sections";
@@ -34,8 +32,6 @@ export default function Home() {
           <Philosophy />
           <TakesForm />
           <Identity />
-          <ProductFamily />
-          <Construction />
           <CtaSection />
         </HomeReveal>
       </main>

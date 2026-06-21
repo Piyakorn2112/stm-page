@@ -152,75 +152,7 @@ export function Identity() {
   );
 }
 
-/* 6 — SOFTWARE HOUSE + PRODUCT FAMILY ────────────────────────────────────── */
-type Product = { name: string; nameClass: string; tag: string; desc: string; color: string; core?: boolean };
-const PRODUCTS: Product[] = [
-  { name: "srang", nameClass: styles.nMembers, tag: "the system", desc: "The core. The generative identity engine everything else grows from.", color: "var(--fg)", core: true },
-  { name: "members", nameClass: styles.nMembers, tag: "soft · human", desc: "Personal identity — IDs and profiles that each carry their own ring.", color: "var(--indigo)" },
-  { name: "Beacon", nameClass: styles.nBeacon, tag: "live · responsive", desc: "Screens and walls that recognise, react, and transform in real time.", color: "var(--blue)" },
-  { name: "LATENT WRITE", nameClass: styles.nLatent, tag: "technical", desc: "Meaning encoded into form — structured data rendered as legible identity.", color: "var(--orange)" },
-  { name: "cMission", nameClass: styles.nCmission, tag: "expressive", desc: "Programs and initiatives that share the system, with their own energy.", color: "var(--indigo)" },
-];
-
-export function ProductFamily() {
-  return (
-    <section id="products" className={styles.section}>
-      <div className={styles.container}>
-        <span className={styles.eyebrow}>Software house &amp; product family</span>
-        <h2 className={styles.heading}>
-          One origin. <em className={styles.accentWord}>Many</em> worlds.
-        </h2>
-        <p className={styles.lede}>
-          Some products are soft and human, some sharp and technical, some playful, some minimal.
-          That diversity is intentional &mdash; they&rsquo;re united not by sameness, but by quality
-          of construction.
-        </p>
-        <div className={styles.productGrid}>
-          {PRODUCTS.map((p) => (
-            <article key={p.name} className={`${styles.productCard} ${p.core ? styles.productCore : ""}`}>
-              <span className={styles.productMark} style={{ color: p.color }} />
-              <span className={`${styles.productName} ${p.nameClass}`}>{p.name}</span>
-              <span className={styles.productTag}>{p.tag}</span>
-              <p className={styles.productDesc}>{p.desc}</p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* 7 — CONSTRUCTION ───────────────────────────────────────────────────────── */
-const TECH: { kicker: string; title: string; desc: string }[] = [
-  { kicker: "fourier · weave", title: "Generative geometry", desc: "Closed-form epicycle math yields a unique, coherent ring for any seed." },
-  { kicker: "hash → form", title: "Deterministic", desc: "The same input always resolves to the same form — reproducible by design." },
-  { kicker: "vector", title: "Pure SVG", desc: "Resolution-independent. Crisp from a favicon to a projected wall." },
-  { kicker: "compositor", title: "Built to scale", desc: "Hundreds of rings stay smooth — the work rides the GPU, not the main thread." },
-];
-
-export function Construction() {
-  return (
-    <section id="technology" className={`${styles.section} ${styles.sectionAlt}`} style={accent("var(--blue)")}>
-      <div className={styles.container}>
-        <span className={styles.eyebrow}>Construction</span>
-        <h2 className={styles.heading}>
-          Quality of <em className={styles.accentWord}>construction</em>.
-        </h2>
-        <div className={styles.techGrid}>
-          {TECH.map((t) => (
-            <div key={t.title} className={styles.techCell}>
-              <span className={styles.techKicker}>{t.kicker}</span>
-              <h3 className={styles.techTitle}>{t.title}</h3>
-              <p className={styles.techDesc}>{t.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* 8 — CTA ────────────────────────────────────────────────────────────────── */
+/* 6 — CTA ────────────────────────────────────────────────────────────────── */
 export function CtaSection() {
   return (
     <section id="contact" className={styles.section} style={accent("var(--orange)")}>
@@ -270,15 +202,7 @@ export function SiteFooter() {
           <div className={styles.footerCol}>
             <span className={styles.footerColHead}>System</span>
             <a href="#identity">Identity</a>
-            <a href="#products">Products</a>
-            <a href="#technology">Construction</a>
-          </div>
-          <div className={styles.footerCol}>
-            <span className={styles.footerColHead}>Products</span>
-            <a href="#products">members</a>
-            <a href="#products">Beacon</a>
-            <a href="#products">Latent Write</a>
-            <a href="#products">cMission</a>
+            <a href="/build">How We Work</a>
           </div>
           <div className={styles.footerCol}>
             <span className={styles.footerColHead}>Contact</span>
