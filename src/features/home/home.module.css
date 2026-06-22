@@ -1,0 +1,278 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Home feature — section-specific styles. General editorial primitives
+   (.section/.container/.eyebrow/.heading/.lede/.body) are GLOBAL (globals.css);
+   reusable visuals carry their own module. Only home section layout lives here.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────── Hero ───────────────────────────── */
+/* A normal full-viewport section in the scroll flow; it simply scrolls away. */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Mobile: centre the section title (.missionHeading); paragraphs stay left at the gutter.
+   (The general .heading/.eyebrow/.lede mobile rule lives in globals.css.) */
+@media (max-width: 880px) {
+  .missionHeading {
+    text-align: center;
+    margin-inline: auto;
+  }
+  .missionLede {
+    text-align: left;
+    margin-inline: 0;
+  }
+}
+
+/* ─────────────────── Mission (soft-body graphic) ──────────────────── */
+/* Graphic on the LEFT, smaller text on the RIGHT; centred + stacked on mobile. */
+.missionSplit {
+  display: grid;
+  grid-template-columns: 1.12fr 0.88fr;
+  gap: clamp(36px, 7vw, 112px);
+  align-items: center;
+}
+.missionVisual {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  /* the canvas fills this box; nothing else paints here */
+}
+.missionText {
+  align-self: center;
+}
+/* Deliberately smaller than the page's headline statement. */
+.missionHeading {
+  font-size: clamp(2.05rem, 5vw, 3.4rem); /* full size — same as the global .heading */
+  font-weight: 680;
+  line-height: 1.04;
+  letter-spacing: -0.032em;
+  color: var(--fg);
+  max-width: 18ch;
+  text-wrap: balance;
+}
+.missionLede {
+  margin-top: 24px;
+  font-size: clamp(1.05rem, 1.7vw, 1.3rem); /* full size — same as the global .lede */
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 52ch;
+  letter-spacing: -0.01em;
+}
+@media (max-width: 880px) {
+  .missionSplit {
+    grid-template-columns: 1fr;
+  }
+  .missionVisual {
+    order: -1;
+    max-width: 360px;
+    margin-inline: auto;
+  }
+}
+
+/* Faint twisted-ring decoration (the expressive form, not the base circle),
+   bleeding off a section edge. Sized/positioned inline by the caller. */
+.decorRing {
+  position: absolute;
+  z-index: 0;
+  opacity: 0.07;
+  pointer-events: none;
+}
+@media (prefers-color-scheme: dark) {
+  .decorRing {
+    opacity: 0.13;
+  }
+}
+
+/* ──────────────────── Identity (ring grid) ───────────────────── */
+.idSplit {
+  display: grid;
+  grid-template-columns: 1fr 0.92fr; /* text on the LEFT, ring grid on the right */
+  gap: clamp(44px, 7.5vw, 120px);
+  align-items: center;
+}
+.idText {
+  align-self: center;
+}
+/* arrow link out to the How We Work page (accent-coloured, nudges on hover) */
+.idLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  font-size: 1rem;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  color: var(--accent);
+  transition: gap 160ms ease;
+}
+.idLink:hover {
+  gap: 13px;
+}
+@media (max-width: 880px) {
+  .idSplit {
+    grid-template-columns: 1fr;
+  }
+  .idGridWrap {
+    order: -1; /* ring grid on TOP of the copy on mobile */
+  }
+}
+
+/* ─────────────────── Philosophy (full-bleed ring environment) ──────────── */
+/* The ArcField fills the whole section; the text sits on top (left) and carries a
+   reserve hitbox so the icons stay out from under it. */
+.philFull {
+  position: relative;
+  min-height: clamp(560px, 88vh, 920px);
+  display: flex;
+  align-items: center;
+}
+.philArcBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.philText {
+  position: relative;
+  z-index: 1;
+  max-width: 46ch;
+}
+/* Mobile: still full-bleed — the text sits along the BOTTOM, overlapping into the
+   canvas (its hitbox keeps icons off), and the ring floats above it. */
+@media (max-width: 880px) {
+  .philFull {
+    align-items: flex-end;
+    min-height: clamp(620px, 92vh, 920px);
+    padding-bottom: clamp(28px, 7vh, 64px);
+  }
+  .philText {
+    max-width: none; /* span the gutter width like every other section */
+  }
+}
+
+/* ─────────────────── Where it takes form ─────────────────────── */
+/* A VERTICAL channel graphic sits alongside the copy (copy on the right). */
+.formSplit {
+  display: grid;
+  grid-template-columns: 0.62fr 1fr;
+  gap: clamp(32px, 6vw, 100px);
+  align-items: stretch;
+}
+.formText {
+  align-self: center;
+}
+/* Pillars as a clean list inside a softly darkened, rounded panel (no rules). */
+.formPillars {
+  margin-top: clamp(36px, 5vw, 56px);
+  max-width: 660px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: clamp(6px, 1vw, 12px) clamp(20px, 2.6vw, 34px);
+}
+.formPillar {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding-block: clamp(16px, 2.1vw, 22px);
+}
+.formPillarIcon {
+  color: var(--accent);
+  flex: none;
+  margin-top: 3px;
+}
+.formPillarTitle {
+  font-size: 1.14rem;
+  font-weight: 620;
+  letter-spacing: -0.016em;
+  color: var(--fg);
+}
+.formPillarDesc {
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+/* The vertical soft-body channel — a tall column beside the copy. */
+.formFlow {
+  position: relative;
+  width: 100%;
+  min-height: clamp(440px, 72vh, 720px);
+}
+.formFlowCanvas {
+  position: absolute;
+  inset: 0;
+}
+@media (max-width: 880px) {
+  .formSplit {
+    grid-template-columns: 1fr;
+    gap: clamp(28px, 6vw, 48px);
+  }
+  .formFlow {
+    order: -1; /* graphic on TOP on mobile */
+    min-height: clamp(380px, 56vh, 520px);
+    max-width: 420px;
+    margin-inline: auto;
+  }
+}
+
+/* ──────────────────────────── CTA ────────────────────────────── */
+.cta {
+  position: relative;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ctaHeading {
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  font-weight: 680;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  color: var(--fg);
+  max-width: 14ch;
+}
+.ctaSub {
+  margin-top: 18px;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  color: var(--muted);
+  max-width: 44ch;
+}
+.ctaActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 36px;
+}
+.btnPrimary {
+  padding: 14px 28px;
+  border-radius: var(--radius-pill);
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: 540;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.btnPrimary:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+.btnGhost {
+  padding: 14px 28px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  color: var(--fg);
+  font-weight: 540;
+  transition: border-color 160ms ease;
+}
+.btnGhost:hover {
+  border-color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btnPrimary:hover {
+    transform: none;
+  }
+}

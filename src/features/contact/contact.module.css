@@ -1,0 +1,27 @@
+/* /contact — minimal placeholder. A nav, a centred email, and the footer. The hero
+   fills the space between nav and footer with the email quietly centred. */
+.page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+.hero {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 140px 24px 96px;
+  text-align: center;
+}
+.email {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  transition: color 200ms var(--ease-standard);
+}
+.email:hover {
+  color: var(--fg);
+}

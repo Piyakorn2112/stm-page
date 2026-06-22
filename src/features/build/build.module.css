@@ -1,0 +1,489 @@
+/* ════════════════════════════════════════════════════════════════════════
+   /build — "Build With Us" careers page. Reuses the site tokens (globals.css);
+   the hero fills the viewport (the 3D badge), the nav hides over it (like home),
+   and the hero blends smoothly down into the normal page below.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Nav — ALWAYS visible on /build. Over the hero it wears the hero's off-white so it
+   reads as part of the scene; once scrolled past the hero it becomes the default
+   translucent bar over the white content. min-height matches the homepage nav so the
+   two bars are the same thickness. */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  /* Full-bleed bar, but the logo + links align to the CONTENT max-width: side padding equals
+     the section container's side margin (so on wide screens content sits within --maxw, while
+     the bar background still spans edge-to-edge). Collapses to a plain gutter below --maxw. */
+  padding: 13px max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+  min-height: 57px;
+  /* Over the hero: a Material-style FROSTED bar — the hero's shadowed off-white at low
+     opacity (the bar sits in shadow, so a touch darker than the wall), with a faint
+     border + dimmed brand/links. Scrolled → it firms up into the solid bar. */
+  background: color-mix(in srgb, #e7e3dc 46%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--fg) 5%, transparent);
+  transition: background 340ms ease, border-color 340ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  .nav {
+    background: color-mix(in srgb, #24262d 46%, transparent);
+  }
+}
+.navScrolled {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border-bottom-color: var(--border);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg);
+}
+.brandMark {
+  display: block;
+  width: 128px;
+  aspect-ratio: 806 / 127;
+  background: url("/STM%20logo%20long%20text.svg") center / contain no-repeat;
+  opacity: 0.74; /* dimmed over the hero; firms up when scrolled */
+  transition: opacity 340ms ease;
+}
+.navScrolled .brandMark {
+  opacity: 1;
+}
+@media (prefers-color-scheme: dark) {
+  .brandMark {
+    filter: invert(1); /* bright white wordmark; the 0.74 opacity gives it a slight tint */
+  }
+}
+.headerLink {
+  font-size: 0.93rem;
+  color: color-mix(in srgb, var(--muted) 58%, transparent); /* faint over the hero */
+  transition: color 340ms ease;
+}
+.navScrolled .headerLink {
+  color: var(--muted);
+}
+.headerLink:hover {
+  color: var(--fg);
+}
+/* full primary navigation on /build (mirrors the homepage nav, links point back home) */
+.navLinks {
+  display: flex;
+  align-items: center;
+  /* roomier than before: leaves space for the hover-reveal icon (sits left of each label) */
+  gap: clamp(30px, 3.2vw, 46px);
+  font-size: 0.93rem;
+}
+.navLink {
+  position: relative; /* anchor for the hover-reveal icon */
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  /* reserve the icon's zone INSIDE the link box so the hit area spans icon→text with no
+     gap; the negative margin cancels it so the resting label position is unchanged */
+  padding-left: 23px;
+  margin-left: -23px;
+  color: color-mix(in srgb, var(--muted) 58%, transparent); /* faint over the hero */
+  transition: color 340ms ease;
+}
+.navScrolled .navLink {
+  color: var(--muted);
+}
+.navLink:hover,
+.navLinkActive,
+.navScrolled .navLinkActive {
+  color: var(--fg); /* current page ("How We Work") stays emphasised */
+}
+/* Desktop: icon HIDDEN by default, scales + fades in only on hover/focus. Absolutely
+   positioned so the reveal never reflows the row. Same easing as the mobile menu expand. */
+.navIcon {
+  position: absolute;
+  left: 0; /* within the reserved padding — leaves a comfortable gap to its label */
+  top: 50%;
+  display: inline-flex;
+  opacity: 0;
+  transform: translateY(-50%) scale(0.82); /* starts larger ⇒ a gentler scale-up on reveal */
+  transform-origin: center;
+  pointer-events: none;
+  transition: opacity 260ms var(--ease-standard), transform 260ms var(--ease-standard);
+}
+.navLink:hover .navIcon,
+.navLink:focus-visible .navIcon {
+  opacity: 1;
+  transform: translateY(-50%) scale(1); /* just scales up + fades in, no shift */
+}
+/* CTA — the primary action as a tight, fully-rounded pill (solid ink ⇒ inverts in dark). */
+.navCta {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background 200ms var(--ease-standard), color 200ms var(--ease-standard);
+}
+.navCta:hover {
+  background: var(--accent);
+  color: #fff;
+}
+/* desktop: transparent wrapper so the brand sits directly in the nav's flex row */
+.navTop {
+  display: contents;
+}
+/* mobile hamburger — hidden on desktop */
+.navBurger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin: -6px;
+  padding: 6px;
+  color: var(--fg);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.navScrim {
+  display: none;
+}
+
+/* Hero — full viewport; the badge canvas fills it, the input sits at the bottom. */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.stage {
+  position: absolute;
+  inset: 0;
+}
+/* Smooth blend from the lit hero down into the normal page background. */
+.heroFade {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 30%;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--bg) 55%, transparent) 55%, var(--bg) 100%);
+}
+
+/* Nickname input — overlaid near the bottom of the hero; shapes the badge. */
+.heroForm {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(34px, 7vh, 84px);
+  transform: translateX(-50%);
+  z-index: 2;
+  width: min(460px, calc(100% - 2 * var(--gutter)));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+/* The name is typed directly ON the badge (the card's name field is the visible control).
+   This input is the real text target — visually hidden but focusable, so it drives typing,
+   the mobile keyboard, IME and paste. pointer-events:none ⇒ it never intercepts the canvas. */
+.nameField {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  background: transparent;
+  color: transparent;
+  pointer-events: none;
+}
+.nameLine {
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--muted);
+  text-align: center;
+  /* fits on one line within the form on desktop; wraps only if truly too narrow */
+}
+.nameHint {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  color: var(--faint);
+  text-align: center;
+}
+
+/* Copy below the fold, centred. */
+.intro {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  width: 100%;
+  padding: clamp(48px, 9vh, 120px) var(--gutter) clamp(72px, 12vh, 140px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.intro .lede {
+  margin-inline: auto;
+}
+
+/* ── How We Work content ──────────────────────────────────────────────── */
+/* Centred statement blocks (opening + closing). */
+.workCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 820px;
+  margin-inline: auto;
+}
+
+/* Operating principles — accent-ruled cells. */
+.principles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: clamp(22px, 3vw, 40px);
+  margin-top: clamp(40px, 5vw, 64px);
+}
+.principle {
+  border-top: 2px solid var(--accent);
+  padding-top: 20px;
+}
+.principleIcon {
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.principleTitle {
+  font-size: 1.16rem;
+  font-weight: 640;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+.principleDesc {
+  margin-top: 10px;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* Aligned, not isolated — diagram beside the copy. */
+.alignSplit {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: clamp(28px, 4.5vw, 64px);
+  align-items: center;
+  /* break out wider than the 1180px text container so the gathering canvas gets real
+     room (clipped only by the full-width section, so no horizontal scroll) */
+  width: min(1340px, 95vw);
+  margin-inline: calc((100% - min(1340px, 95vw)) / 2);
+}
+.alignVisual {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+.teamField {
+  position: absolute;
+  inset: 0;
+}
+.alignText {
+  align-self: center;
+}
+/* the small structural diagram now lives inside the copy, after the layer list */
+.alignDiagramInline {
+  display: block;
+  width: 100%;
+  max-width: 380px;
+  margin: 8px 0 22px;
+}
+.alignList {
+  list-style: none;
+  margin: 22px 0;
+  display: grid;
+  gap: 15px;
+}
+.alignItem {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.alignIcon {
+  color: var(--accent);
+  flex: none;
+  margin-top: 1px;
+}
+.alignBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.alignItemT {
+  font-weight: 600;
+  font-size: 1.02rem;
+  color: var(--fg);
+}
+.alignItemD {
+  font-size: 0.96rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* Who fits / who doesn't — attract on the left, filter on the right. */
+.fitCols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(28px, 5vw, 64px);
+  margin-top: clamp(40px, 5vw, 60px);
+}
+.fitHead {
+  font-size: 1.1rem;
+  font-weight: 620;
+  letter-spacing: -0.012em;
+  color: var(--fg);
+  margin-bottom: 18px;
+}
+.fitColMuted .fitHead {
+  color: var(--muted);
+}
+.fitList {
+  list-style: none;
+  display: grid;
+  gap: 13px;
+}
+.fitItem,
+.fitItemMuted {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.fitIcon {
+  flex: none;
+  margin-top: 2px;
+}
+.fitItem .fitIcon {
+  color: var(--accent);
+}
+.fitItemMuted .fitIcon {
+  color: var(--faint);
+}
+
+@media (max-width: 880px) {
+  .alignSplit {
+    grid-template-columns: 1fr;
+    gap: clamp(28px, 6vw, 44px);
+    /* reset the desktop break-out: keep the mobile canvas at its normal size */
+    width: auto;
+    margin-inline: 0;
+  }
+  .alignVisual {
+    order: -1;
+    max-width: 440px;
+    margin-inline: auto;
+  }
+  .fitCols {
+    grid-template-columns: 1fr;
+  }
+  /* match the site-wide mobile rule: title centred (handled by site .heading/.eyebrow),
+     paragraphs left-aligned at the gutter — so these statement blocks stop centring their
+     copy and share the same side spacing as every other section */
+  .intro,
+  .workCenter {
+    align-items: stretch;
+  }
+  .intro .lede {
+    margin-inline: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  /* the bar grows in height to reveal the links (Apple-style), no popup */
+  .nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0; /* the base 24px gap would otherwise pad the collapsed bar by a whole row-gap */
+  }
+  .navTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 31px;
+  }
+  .navBurger {
+    display: inline-flex;
+  }
+  .navScrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: color-mix(in srgb, #000 28%, transparent);
+    /* blur via Tailwind `backdrop-blur-[5px]` on the element (Chrome ignores a CSS-module
+       backdrop-filter here — same workaround as the nav bar) */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 360ms var(--ease-standard);
+  }
+  .navScrimShown {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .navLinks {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 380ms var(--ease-standard), opacity 240ms ease,
+      padding 380ms var(--ease-standard);
+  }
+  .navOpen .navLinks {
+    max-height: 70vh;
+    opacity: 1;
+    padding-top: 14px;
+    padding-bottom: 8px;
+  }
+  .navLink {
+    padding: 12px 2px;
+    margin-left: 0; /* drop the desktop icon-zone reservation */
+    font-size: 1.06rem;
+    gap: 13px;
+  }
+  /* keep the CTA a tight pill in the drawer (don't let the stretch column widen it) */
+  .navCta {
+    align-self: flex-start;
+    margin: 8px 0 2px;
+    font-size: 0.95rem;
+    padding: 9px 18px;
+  }
+  /* mobile drawer keeps icons inline + always visible; neutralise the desktop hover
+     transforms so tapping a link shifts neither the icon (translateY) nor the link (translateX) */
+  .navIcon,
+  .navLink:hover .navIcon,
+  .navLink:focus-visible .navIcon {
+    position: static;
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

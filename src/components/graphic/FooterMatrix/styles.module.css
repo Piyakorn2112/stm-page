@@ -1,0 +1,13 @@
+/* FooterMatrix — fills the footer behind its content (the footer sets position +
+   isolation; content sits above via z-index). Non-interactive. */
+.wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

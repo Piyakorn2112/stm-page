@@ -1,0 +1,226 @@
+/* Nav — self-contained styles for the primary navigation (the home/default look:
+   translucent, hidden over the hero, revealed past it). The /build nav passes its own
+   frosted variant from build.module.css; the structural rules below are shared by both
+   via the unified Nav + NavInner. */
+
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  /* Full-bleed bar, but the logo + links align to the CONTENT max-width: side padding equals
+     the section container's side margin (so on wide screens content sits within --maxw, while
+     the bar background still spans edge-to-edge). Collapses to a plain gutter below --maxw. */
+  padding: 13px max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+  min-height: 57px; /* fixed bar height (matches /build) — independent of link content */
+  opacity: 0;
+  /* Reveal with opacity + margin-top (NOT transform). A `transform` on the same
+     element as `backdrop-filter` is the other thing that breaks the blur in
+     Chrome (the element gets composited and the backdrop sample fails); margin-top
+     gives the same slide-down without a transform. */
+  pointer-events: none;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  /* blur is applied via Tailwind `backdrop-blur-md` on the element (see Nav) */
+  border-bottom: 1px solid transparent;
+  transition: opacity 320ms ease, filter 320ms ease, margin-top 360ms ease, border-color 360ms ease;
+}
+
+.navShown {
+  opacity: 1;
+  margin-top: 0;
+  pointer-events: auto;
+  filter: blur(0px);
+  border-bottom-color: var(--border);
+}
+
+.navBrand {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg);
+}
+
+/* STM long wordmark; black artwork ⇒ invert to white on dark. */
+.navMark {
+  display: block;
+  width: 128px;
+  aspect-ratio: 806 / 127;
+  background: url("/STM%20logo%20long%20text.svg") center / contain no-repeat;
+}
+@media (prefers-color-scheme: dark) {
+  .navMark {
+    filter: invert(1);
+  }
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  /* roomy: leaves space for the hover-reveal icon (sits left of each label) AND the
+     small rightward shift the whole link makes on hover, so nothing ever crowds */
+  gap: clamp(40px, 4vw, 58px);
+  font-size: 0.93rem;
+  color: var(--muted);
+}
+.navLinks a:hover {
+  color: var(--fg);
+}
+.navLink {
+  position: relative; /* anchor for the hover-reveal icon */
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  /* reserve the icon's zone INSIDE the link box so the hit area spans icon→text with no
+     gap; the negative margin cancels it so the resting label position is unchanged */
+  padding-left: 23px;
+  margin-left: -23px;
+}
+/* Desktop: the icon is HIDDEN by default and scales + fades in only while the link is
+   hovered/focused. It's absolutely positioned (just left of the label) so revealing it
+   never reflows the row. Same easing as the mobile menu expand (no overshoot). */
+.navIcon {
+  position: absolute;
+  left: 0; /* within the reserved padding — leaves a comfortable gap to its label */
+  top: 50%;
+  display: inline-flex;
+  opacity: 0;
+  transform: translateY(-50%) scale(0.82); /* starts larger ⇒ a gentler scale-up on reveal */
+  transform-origin: center;
+  pointer-events: none;
+  transition: opacity 260ms var(--ease-standard), transform 260ms var(--ease-standard);
+}
+.navLink:hover .navIcon,
+.navLink:focus-visible .navIcon {
+  opacity: 1;
+  transform: translateY(-50%) scale(1); /* just scales up + fades in, no shift */
+}
+
+/* CTA — the primary action as a tight, fully-rounded pill (solid ink ⇒ inverts in dark
+   via tokens). Sits at the end of the link row. */
+.navCta {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background 200ms var(--ease-standard), color 200ms var(--ease-standard);
+}
+/* scoped to beat `.navLinks a:hover` */
+.navLinks a.navCta:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* desktop: transparent wrapper so the brand sits directly in the nav's flex row */
+.navTop {
+  display: contents;
+}
+
+/* mobile hamburger — hidden on desktop (horizontal links shown instead) */
+.navBurger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin: -6px;
+  padding: 6px;
+  color: var(--fg);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* full-screen scrim that darkens + blurs the page behind the expanded mobile menu;
+   sits just under the nav (z 39 vs 40). Off on desktop. */
+.navScrim {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  /* the bar grows in height to reveal the links (Apple-style), no popup */
+  .nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0; /* the base 24px gap would otherwise pad the collapsed bar by a whole row-gap */
+  }
+  /* the bar's top row: brand left, hamburger right — its own stable row, so the drawer
+     below never shifts the logo */
+  .navTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 31px; /* + the bar's 13px top/bottom padding ≈ 57px closed */
+  }
+  .navBurger {
+    display: inline-flex;
+  }
+  .navScrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: color-mix(in srgb, #000 28%, transparent);
+    /* blur is applied via Tailwind `backdrop-blur-[5px]` on the element — a CSS-module
+       backdrop-filter here isn't honoured by Chrome (same workaround as the nav bar) */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 360ms var(--ease-standard);
+  }
+  .navScrimShown {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  /* links become a vertical drawer below the bar row that expands open */
+  .navLinks {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 380ms var(--ease-standard), opacity 240ms ease,
+      padding 380ms var(--ease-standard);
+  }
+  .navOpen .navLinks {
+    max-height: 70vh;
+    opacity: 1;
+    padding-top: 14px; /* breathing room below the logo */
+    padding-bottom: 8px;
+  }
+  .navLink {
+    padding: 12px 2px;
+    margin-left: 0; /* drop the desktop icon-zone reservation */
+    font-size: 1.06rem;
+    gap: 13px;
+  }
+  /* keep the CTA a tight pill in the drawer (don't let the stretch column widen it) */
+  .navCta {
+    align-self: flex-start;
+    margin: 8px 0 2px;
+    font-size: 0.95rem;
+    padding: 9px 18px;
+  }
+  /* mobile drawer keeps icons inline + always visible; neutralise the desktop hover
+     transforms so tapping a link shifts neither the icon (translateY) nor the link (translateX) */
+  .navIcon,
+  .navLink:hover .navIcon,
+  .navLink:focus-visible .navIcon {
+    position: static;
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav {
+    transition: opacity 0ms, border-color 0ms;
+    transform: none;
+  }
+}

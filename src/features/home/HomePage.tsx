@@ -1,0 +1,31 @@
+/**
+ * HomePage — the home feature composition. Nav + hero (HomeReveal) + the content sections
+ * + footer. The route file (app/page.tsx) only renders this.
+ */
+import Nav from "@/components/ui/Nav/Nav";
+import Footer from "@/components/ui/Footer/Footer";
+import { homeNavConfig } from "./nav.config";
+import HomeReveal from "./HomeReveal";
+import { Mission } from "./sections/Mission";
+import { Philosophy } from "./sections/Philosophy";
+import { TakesForm } from "./sections/TakesForm";
+import { Identity } from "./sections/Identity";
+import { Cta } from "./sections/Cta";
+
+export default function HomePage() {
+  return (
+    <>
+      <Nav config={homeNavConfig} />
+      <main>
+        <HomeReveal>
+          <Mission />
+          <Philosophy />
+          <TakesForm />
+          <Identity />
+          <Cta />
+        </HomeReveal>
+      </main>
+      <Footer />
+    </>
+  );
+}

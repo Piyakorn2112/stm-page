@@ -1,0 +1,76 @@
+/* Footer — self-contained styles. Uses the global `.container` primitive for width. */
+.footer {
+  position: relative; /* anchors the matrix backdrop */
+  isolation: isolate; /* own stacking context so the matrix sits cleanly behind content */
+  overflow: hidden; /* clip the full-bleed matrix to the footer box */
+  border-top: 1px solid var(--border);
+  padding-block: 60px;
+  background: var(--bg-soft);
+}
+/* the faint ring-matrix backdrop fills the footer, behind every content row */
+.matrix {
+  z-index: 0;
+}
+.footerInner,
+.footerBottom {
+  position: relative;
+  z-index: 1; /* content above the matrix */
+}
+.footerInner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.footerBrand {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg);
+}
+/* STM long wordmark; black artwork ⇒ invert to white on dark (matches the nav). */
+.footerMark {
+  display: block;
+  width: 150px;
+  aspect-ratio: 806 / 127;
+  background: url("/STM%20logo%20long%20text.svg") left center / contain no-repeat;
+}
+@media (prefers-color-scheme: dark) {
+  .footerMark {
+    filter: invert(1);
+  }
+}
+.footerTag {
+  margin-top: 14px;
+  font-size: 0.92rem;
+  color: var(--muted);
+  max-width: 26ch;
+}
+.footerCols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(32px, 6vw, 76px);
+}
+.footerCol {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 0.93rem;
+  color: var(--muted);
+}
+.footerColHead {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+.footerCol a:hover {
+  color: var(--fg);
+}
+.footerNote {
+  margin-top: 44px;
+  font-size: 0.82rem;
+  color: var(--faint);
+}
