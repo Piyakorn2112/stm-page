@@ -17,12 +17,12 @@ export function Mission() {
           <h2 className={styles.missionHeading}>
             <em className={"accentWord"} style={{ color: "var(--orange)" }}>Creativity</em>,{" "}
             <em className={"accentWord"} style={{ color: "var(--blue)" }}>engineering</em>, and{" "}
-            <em className={"accentWord"} style={{ color: "var(--indigo)" }}>intelligence</em> &mdash;
+            <em className={"accentWord"} style={{ color: "var(--indigo)" }}>intelligence</em>;
             pulled into one system.
           </h2>
           <p className={styles.missionLede}>
             Not just a software house. A place where design, engineering, and identity are treated
-            as one &mdash; held under structure and pressure until they become a single, living
+            as one, held under structure and pressure until they become a single, living
             identity.
           </p>
         </div>

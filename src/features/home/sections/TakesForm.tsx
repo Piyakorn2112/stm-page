@@ -26,13 +26,13 @@ export function TakesForm() {
             From structure to <em className={"accentWord"}>reality</em>.
           </h2>
           <p className={"lede"}>
-            What we build is never separate from how we think &mdash; every system begins as
+            What we build is never separate from how we think. Every system begins as
             structure.
           </p>
           <p className={"body"}>
             Then it&rsquo;s pushed, tested, and refined until it holds under real use: technically
             and behaviorally, not just visually. We design identities that scale, tools that evolve,
-            and systems that stay coherent as they grow &mdash; because what matters isn&rsquo;t
+            and systems that stay coherent as they grow, because what matters isn&rsquo;t
             making something new, but ensuring it can keep becoming.
           </p>
           <div className={styles.formPillars}>

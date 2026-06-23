@@ -3,7 +3,9 @@
  * and content stay separate. Uses the site primitives stylesheet. A faint, greyscale,
  * worker-driven ring matrix (FooterMatrix) sits behind the content as the backdrop.
  */
+import Link from "next/link";
 import FooterMatrix from "@/components/graphic/FooterMatrix/FooterMatrix";
+import StmLogo from "@/components/graphic/StmLogo/StmLogo";
 import styles from "./styles.module.css";
 
 export default function Footer() {
@@ -12,9 +14,9 @@ export default function Footer() {
       <FooterMatrix className={styles.matrix} />
       <div className={`container ${styles.footerInner}`}>
         <div>
-          <a className={styles.footerBrand} href="#top" aria-label="Srang Tech Mai — home">
-            <span className={styles.footerMark} aria-hidden="true" />
-          </a>
+          <Link className={styles.footerBrand} href="/" aria-label="Srang Tech Mai, home">
+            <StmLogo width={300} />
+          </Link>
           <p className={styles.footerTag}>Structure for what&rsquo;s next.</p>
         </div>
         <div className={styles.footerCols}>

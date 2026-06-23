@@ -19,7 +19,7 @@ const PRINCIPLES = [
   {
     Icon: Blend,
     t: "Multi-disciplinary by default",
-    d: "Designers code. Engineers design. Not because they have to — but because understanding across fields produces better decisions.",
+    d: "Designers code. Engineers design. Not because they have to, but because understanding across fields produces better decisions.",
   },
   {
     Icon: Users,
@@ -34,7 +34,7 @@ const PRINCIPLES = [
   {
     Icon: Hand,
     t: "Deep ownership",
-    d: "If you touch it, you own it. From idea to execution — no passing responsibility.",
+    d: "If you touch it, you own it. From idea to execution: no passing responsibility.",
   },
   {
     Icon: Gem,
@@ -76,10 +76,10 @@ export default function WorkContent() {
           </h2>
           <p className={"lede"}>
             We don’t organize work by rigid roles. We build small, high-context teams where design,
-            engineering, and thinking exist together — not in sequence.
+            engineering, and thinking exist together, not in sequence.
           </p>
           <p className={"body"}>
-            Each team is responsible for outcomes, not handoffs. Ideas don’t wait in queues — they
+            Each team is responsible for outcomes, not handoffs. Ideas don’t wait in queues. They
             evolve in place.
           </p>
         </div>
@@ -95,7 +95,9 @@ export default function WorkContent() {
           <div className={styles.principles}>
             {PRINCIPLES.map(({ Icon, t, d }) => (
               <div key={t} className={styles.principle}>
-                <Icon className={styles.principleIcon} size={24} strokeWidth={2.4} aria-hidden />
+                <div className={styles.principleIconWrap}>
+                  <Icon className={styles.principleIcon} size={20} strokeWidth={2.3} aria-hidden />
+                </div>
                 <h3 className={styles.principleTitle}>{t}</h3>
                 <p className={styles.principleDesc}>{d}</p>
               </div>
@@ -115,7 +117,7 @@ export default function WorkContent() {
             <h2 className={"heading"}>
               Aligned, not <em className={"accentWord"}>isolated</em>.
             </h2>
-            <p className={"lede"}>Teams operate independently — but not in isolation.</p>
+            <p className={"lede"}>Teams operate independently, but not in isolation.</p>
             <p className={"body"}>Across teams, we maintain shared layers of alignment:</p>
             <ul className={styles.alignList}>
               {ALIGN.map(({ Icon, t, d }) => (

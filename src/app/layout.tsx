@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Srang Tech Mai — Structure for what's next",
+  title: "Srang Tech Mai - Structure for what's next",
   description:
     "Srang Tech Mai builds systems that generate identity. A generative ring engine turns any input into deterministic, animated form.",
 };

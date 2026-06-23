@@ -12,7 +12,7 @@ export const homeNavConfig: NavConfig = {
   ariaLabel: "Primary",
   anchorPrefix: "",
   brand: (
-    <a className={styles.navBrand} href="#top" aria-label="Srang Tech Mai — top">
+    <a className={styles.navBrand} href="#top" aria-label="Srang Tech Mai, top">
       <span className={styles.navMark} />
     </a>
   ),

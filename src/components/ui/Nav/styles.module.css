@@ -3,29 +3,40 @@
    frosted variant from build.module.css; the structural rules below are shared by both
    via the unified Nav + NavInner. */
 
+/* The nav is a COLUMN: a fixed-height bar row (.navRow) + an expandable region below it
+   (the Product mega sheet on desktop / the links drawer on mobile). Because the sheet is
+   IN-FLOW, the nav element itself grows and its own background + blur expand with it — one
+   surface, exactly like the mobile drawer. */
 .nav {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 40;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  /* Full-bleed bar, but the logo + links align to the CONTENT max-width: side padding equals
-     the section container's side margin (so on wide screens content sits within --maxw, while
-     the bar background still spans edge-to-edge). Collapses to a plain gutter below --maxw. */
-  padding: 13px max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
-  min-height: 57px; /* fixed bar height (matches /build) — independent of link content */
+  flex-direction: column;
   opacity: 0;
   /* Reveal with opacity + margin-top (NOT transform). A `transform` on the same
      element as `backdrop-filter` is the other thing that breaks the blur in
      Chrome (the element gets composited and the backdrop sample fails); margin-top
-     gives the same slide-down without a transform. */
+     gives the same slide-down without a transform. The translucent fill + blur is the
+     SAME in the collapsed bar and the expanded sheet (the sheet is in-flow, so this
+     material simply grows with the nav). */
   pointer-events: none;
   background: color-mix(in srgb, var(--bg) 90%, transparent);
   /* blur is applied via Tailwind `backdrop-blur-md` on the element (see Nav) */
   border-bottom: 1px solid transparent;
   transition: opacity 320ms ease, filter 320ms ease, margin-top 360ms ease, border-color 360ms ease;
+}
+
+/* the bar row — full-bleed, but the logo + links align to the CONTENT max-width (side padding =
+   the section container's side margin). It's the positioning context for the centred links + CTA. */
+.navRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 13px max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+  min-height: 57px;
 }
 
 .navShown {
@@ -40,6 +51,11 @@
   display: inline-flex;
   align-items: center;
   color: var(--fg);
+  transition: opacity 200ms var(--ease-standard);
+}
+.navBrand:hover,
+.navBrand:focus-visible {
+  opacity: 0.62; /* a home BUTTON — same subtle lighten as the rest of the nav */
 }
 
 /* STM long wordmark; black artwork ⇒ invert to white on dark. */
@@ -58,9 +74,8 @@
 .navLinks {
   display: flex;
   align-items: center;
-  /* roomy: leaves space for the hover-reveal icon (sits left of each label) AND the
-     small rightward shift the whole link makes on hover, so nothing ever crowds */
-  gap: clamp(40px, 4vw, 58px);
+  /* tight spacing between the centred links */
+  gap: clamp(22px, 2.2vw, 32px);
   font-size: 0.93rem;
   color: var(--muted);
 }
@@ -68,54 +83,92 @@
   color: var(--fg);
 }
 .navLink {
-  position: relative; /* anchor for the hover-reveal icon */
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  /* reserve the icon's zone INSIDE the link box so the hit area spans icon→text with no
-     gap; the negative margin cancels it so the resting label position is unchanged */
-  padding-left: 23px;
-  margin-left: -23px;
 }
-/* Desktop: the icon is HIDDEN by default and scales + fades in only while the link is
-   hovered/focused. It's absolutely positioned (just left of the label) so revealing it
-   never reflows the row. Same easing as the mobile menu expand (no overshoot). */
+/* Desktop: the icon is collapsed (zero width) at rest and GROWS in on hover/focus, so the
+   label shifts right to give way to it. Same easing as the mobile menu expand (no overshoot). */
 .navIcon {
-  position: absolute;
-  left: 0; /* within the reserved padding — leaves a comfortable gap to its label */
-  top: 50%;
   display: inline-flex;
+  align-items: center;
+  width: 0;
+  margin-right: 0;
   opacity: 0;
-  transform: translateY(-50%) scale(0.82); /* starts larger ⇒ a gentler scale-up on reveal */
-  transform-origin: center;
+  overflow: hidden;
+  transform: scale(0.82); /* a gentle scale-up as it reveals */
+  transform-origin: left center;
   pointer-events: none;
-  transition: opacity 260ms var(--ease-standard), transform 260ms var(--ease-standard);
+  transition: width 260ms var(--ease-standard), margin-right 260ms var(--ease-standard),
+    opacity 220ms var(--ease-standard), transform 260ms var(--ease-standard);
 }
 .navLink:hover .navIcon,
 .navLink:focus-visible .navIcon {
+  width: 16px; /* NAV_ICON_SIZE — the label shifts right by icon + margin */
+  margin-right: 7px;
   opacity: 1;
-  transform: translateY(-50%) scale(1); /* just scales up + fades in, no shift */
+  transform: scale(1);
 }
 
-/* CTA — the primary action as a tight, fully-rounded pill (solid ink ⇒ inverts in dark
-   via tokens). Sits at the end of the link row. */
+/* CTA — the primary action as a tight, fully-rounded SOLID pill (solid ink ⇒ inverts in dark
+   via tokens). Tight x-padding so the asterisk + label sit concentrically. Sits at the row end. */
 .navCta {
   display: inline-flex;
   align-items: center;
-  padding: 7px 16px;
+  gap: 7px;
+  height: 32px; /* short pill; stays under the 57px bar min-height so the bar's height
+                   + the other items' alignment are unaffected */
+  padding: 0 13px 0 9px; /* tighter left so the asterisk sits concentric in the rounded cap */
   border-radius: var(--radius-pill);
-  background: var(--fg);
+  background: var(--fg); /* SOLID by default */
   color: var(--bg);
   font-size: 0.85rem;
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
-  transition: background 200ms var(--ease-standard), color 200ms var(--ease-standard);
+  transition: opacity 200ms var(--ease-standard);
 }
-/* scoped to beat `.navLinks a:hover` */
+/* lighten on hover (like the product names) — scoped to keep the text colour from the
+   generic `.navLinks a:hover` rule */
 .navLinks a.navCta:hover {
-  background: var(--accent);
-  color: #fff;
+  color: var(--bg);
+  opacity: 0.62;
+}
+
+/* Desktop only: logo stays left (in flow), the text links are CENTRED in the bar, and the
+   CTA is pinned RIGHT at the content gutter. navLinks is absolute (out of flow) so the taller
+   CTA can't change the bar height; mobile keeps its drawer layout untouched. */
+@media (min-width: 721px) {
+  .navLinks {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    justify-content: center; /* centre the text links across the bar */
+    gap: 0; /* spacing now lives in .navLink's own padding, so hit boxes touch */
+    /* this box spans the FULL bar (so centring is independent of the brand's width), but
+       that means its edges sit over the brand/logo in paint order (it's positioned, the
+       brand isn't) and silently swallow clicks meant for it. Make the empty box itself
+       click-through; only its real children stay interactive. */
+    pointer-events: none;
+  }
+  .navLinks a {
+    pointer-events: auto;
+  }
+  /* the same gap, moved INTO each link's hit box: Home/Product/Work end up with
+     CONTIGUOUS clickable areas (no dead zone between them), so the mouse never drops
+     hover state while dragging across the row — it just hands off from one link's box
+     straight into the next. */
+  .navLink {
+    padding-inline: clamp(11px, 1.1vw, 16px);
+  }
+  /* CTA out of the centred flow, pinned to the right at the same gutter as the logo */
+  .navLinks a.navCta {
+    position: absolute;
+    right: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+    top: 50%;
+    transform: translateY(-50%);
+  }
 }
 
 /* desktop: transparent wrapper so the brand sits directly in the nav's flex row */
@@ -136,18 +189,30 @@
   cursor: pointer;
 }
 
-/* full-screen scrim that darkens + blurs the page behind the expanded mobile menu;
-   sits just under the nav (z 39 vs 40). Off on desktop. */
+/* full-screen scrim that darkens + blurs the page behind the expanded menu — both the
+   mobile drawer AND the desktop "Product" mega sheet. Sits just under the nav (z 39 vs 40).
+   blur is applied via Tailwind `backdrop-blur-[5px]` on the element when shown. */
 .navScrim {
-  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: color-mix(in srgb, #000 28%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 360ms var(--ease-standard);
+}
+.navScrimShown {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 @media (max-width: 720px) {
-  /* the bar grows in height to reveal the links (Apple-style), no popup */
-  .nav {
+  /* the bar row grows in height to reveal the links drawer (Apple-style), no popup */
+  .navRow {
     flex-direction: column;
     align-items: stretch;
     gap: 0; /* the base 24px gap would otherwise pad the collapsed bar by a whole row-gap */
+    min-height: 0; /* let the top row + padding define the closed height */
   }
   /* the bar's top row: brand left, hamburger right — its own stable row, so the drawer
      below never shifts the logo */
@@ -160,22 +225,6 @@
   .navBurger {
     display: inline-flex;
   }
-  .navScrim {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 39;
-    background: color-mix(in srgb, #000 28%, transparent);
-    /* blur is applied via Tailwind `backdrop-blur-[5px]` on the element — a CSS-module
-       backdrop-filter here isn't honoured by Chrome (same workaround as the nav bar) */
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 360ms var(--ease-standard);
-  }
-  .navScrimShown {
-    opacity: 1;
-    pointer-events: auto;
-  }
   /* links become a vertical drawer below the bar row that expands open */
   .navLinks {
     flex-direction: column;
@@ -184,6 +233,10 @@
     overflow: hidden;
     max-height: 0;
     opacity: 0;
+    /* bleed the clip box 16px each side (cancelled by the matching padding) so the mega
+       slider's product-panel push has room to move without its edge being clipped */
+    margin-inline: -16px;
+    padding-inline: 16px;
     transition: max-height 380ms var(--ease-standard), opacity 240ms ease,
       padding 380ms var(--ease-standard);
   }
@@ -199,20 +252,21 @@
     font-size: 1.06rem;
     gap: 13px;
   }
-  /* keep the CTA a tight pill in the drawer (don't let the stretch column widen it) */
+  /* CTA identical to desktop (solid, asterisk, concentric padding); just don't let the
+     stretch column widen it, and give it a little breathing room in the drawer */
   .navCta {
     align-self: flex-start;
-    margin: 8px 0 2px;
-    font-size: 0.95rem;
-    padding: 9px 18px;
+    margin: 12px 0 2px;
   }
-  /* mobile drawer keeps icons inline + always visible; neutralise the desktop hover
-     transforms so tapping a link shifts neither the icon (translateY) nor the link (translateX) */
+  /* mobile drawer keeps icons inline + always visible (full width); the navLink gap
+     handles the icon→label spacing, so no margin/transform on the icon itself */
   .navIcon,
   .navLink:hover .navIcon,
   .navLink:focus-visible .navIcon {
-    position: static;
+    width: auto;
+    margin-right: 0;
     opacity: 1;
+    overflow: visible;
     transform: none;
     transition: none;
   }

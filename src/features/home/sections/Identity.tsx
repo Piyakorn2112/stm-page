@@ -2,8 +2,8 @@
  * Identity — "Systems of people, not roles": copy on the LEFT, the employee ring grid
  * (IdentityGrid) on the RIGHT; the grid moves on top of the copy on mobile.
  */
-import Link from "next/link";
 import IdentityGrid from "@/components/graphic/IdentityGrid/IdentityGrid";
+import SectionLink from "@/components/ui/SectionLink/SectionLink";
 import { accent } from "@/utils/accent";
 import styles from "@/features/home/home.module.css";
 
@@ -18,15 +18,13 @@ export function Identity() {
           </h2>
           <p className={"lede"}>
             We don&rsquo;t organize by rigid roles or departments. Small, high-context teams where
-            design, engineering, and thinking live together &mdash; each owning outcomes, not handoffs.
+            design, engineering, and thinking live together, each owning outcomes, not handoffs.
           </p>
           <p className={"body"}>
             Every person carries their own generated ring, and works the way the system does:
             multi-disciplinary, high-agency, aligned but never boxed in.
           </p>
-          <Link className={styles.idLink} href="/build">
-            How we work <span aria-hidden="true">&rarr;</span>
-          </Link>
+          <SectionLink href="/build">How we work</SectionLink>
         </div>
         <div className={styles.idGridWrap}>
           <IdentityGrid />

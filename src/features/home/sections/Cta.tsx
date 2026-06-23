@@ -17,8 +17,8 @@ export function Cta() {
           Built to <em className={"accentWord"}>become</em>.
         </h2>
         <p className={styles.ctaSub}>
-          Structure makes future expression possible. Bring us a name, a product, a program &mdash;
-          we&rsquo;ll give it structure.
+          Structure makes future expression possible. Bring us a name, a product, a program.
+          We&rsquo;ll give it structure.
         </p>
         <div className={styles.ctaActions}>
           <a className={styles.btnPrimary} href="#top">

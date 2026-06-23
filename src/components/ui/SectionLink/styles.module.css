@@ -1,0 +1,16 @@
+/* accent-coloured link out to another page; the arrow nudges right on hover. Reads its
+   colour from the section's own --accent (set via the `accent()` util on an ancestor). */
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  font-size: 1rem;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  color: var(--accent);
+  transition: gap 160ms ease;
+}
+.link:hover {
+  gap: 13px;
+}

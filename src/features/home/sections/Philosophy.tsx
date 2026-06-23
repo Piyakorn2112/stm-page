@@ -17,8 +17,8 @@ export function Philosophy() {
             Structure for what&rsquo;s <em className={"accentWord"}>next</em>.
           </h2>
           <p className={styles.missionLede}>
-            The ring is the environment in which new ideas land and take shape &mdash;
-            foundations strong enough to support many products, many people, and many futures,
+            The ring is the environment in which new ideas land and take shape: foundations
+            strong enough to support many products, many people, and many futures,
             without losing identity along the way.
           </p>
         </div>

@@ -54,7 +54,7 @@ export default function CardExperience() {
             autoCapitalize="words"
           />
           <p className={styles.nameLine}>Every identity in the system is generated, not assigned.</p>
-          <span className={styles.nameHint}>Click the name on the badge to make it yours — then grab the card and give it a swing.</span>
+          <span className={styles.nameHint}>Click the name on the badge to make it yours. Then grab the card and give it a swing.</span>
         </form>
 
         <div className={styles.heroFade} aria-hidden="true" />

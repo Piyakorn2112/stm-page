@@ -116,7 +116,7 @@ export default function RingLab() {
     <main style={wrap}>
       <header style={{ textAlign: "center" }}>
         <h1 style={{ fontSize: 20, fontWeight: 600, margin: 0, color: theme.dark ? "#fff" : "#111" }}>
-          Hero ring — animation experiment
+          Hero ring: animation experiment
         </h1>
         <p style={{ fontSize: 14, maxWidth: 560, margin: "10px auto 0", lineHeight: 1.5 }}>
           Same reveal loop drives both. Left = current SVG (exp-spring + coupled spin). Right =
@@ -149,7 +149,7 @@ export default function RingLab() {
                 hoverable={false}
               />
             </div>
-            <div style={label}>Current — SVG · exp-spring</div>
+            <div style={label}>Current: SVG · exp-spring</div>
           </div>
         )}
         {mode !== "svg" && (
@@ -163,7 +163,7 @@ export default function RingLab() {
                 baseColors={theme.ringBase}
               />
             </div>
-            <div style={label}>New — Canvas · &ldquo;Still Water&rdquo;</div>
+            <div style={label}>New: Canvas · &ldquo;Still Water&rdquo;</div>
           </div>
         )}
       </div>

@@ -24,21 +24,8 @@
   justify-content: space-between;
 }
 .footerBrand {
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
   color: var(--fg);
-}
-/* STM long wordmark; black artwork ⇒ invert to white on dark (matches the nav). */
-.footerMark {
-  display: block;
-  width: 150px;
-  aspect-ratio: 806 / 127;
-  background: url("/STM%20logo%20long%20text.svg") left center / contain no-repeat;
-}
-@media (prefers-color-scheme: dark) {
-  .footerMark {
-    filter: invert(1);
-  }
 }
 .footerTag {
   margin-top: 14px;

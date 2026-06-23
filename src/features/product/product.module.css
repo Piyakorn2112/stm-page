@@ -1,0 +1,30 @@
+/* /product — minimal placeholder. Nav + a centred "Product / coming soon" + footer. */
+.page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+.hero {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 140px 24px 96px;
+  text-align: center;
+}
+.title {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+.note {
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}

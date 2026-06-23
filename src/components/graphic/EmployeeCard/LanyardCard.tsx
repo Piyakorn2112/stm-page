@@ -461,7 +461,14 @@ function Lanyard({
     // (full-strength wind during the initial settle was flinging the card out of frame), and
     // ease it off (not away) while the card is held.
     const warm = Math.min(1, ts / 5);
-    const wScale = (dragged ? 0.4 : 1) * warm * warm;
+    // FRAME-RATE NORMALISER. Every wind/yaw/return impulse below is applied once per RENDER
+    // frame, but the physics steps at a fixed 1/60 — so on a high-refresh display the same
+    // impulses (especially the velocity damping) pile up far more per physics step, over-damping
+    // the sway (it reads subtle/under-reactive at 120-144fps vs 60). Scaling each impulse by
+    // delta·60 makes the per-SECOND force constant: byte-identical at 60fps (fdt=1), halved at
+    // 120fps, etc. Capped at 2 so a frame stutter can't inject a destabilising spike.
+    const fdt = Math.min(delta * 60, 2);
+    const wScale = (dragged ? 0.4 : 1) * warm * warm * fdt;
     // WIND ON THE ROPE: a soft, gusty lateral breeze pushes the strap nodes. The hub is a near-
     // weightless, low-friction REVOLUTE hinge, so this billow (plus the card's own sway) is what
     // physically swings the whole lanyard — emergent, not scripted. Lower nodes get a bit more so
@@ -540,7 +547,7 @@ function Lanyard({
       // a SMALL lateral breeze on the card — kept light so the side-to-side sway stays subtle
       windPt.set(0, -CARD_H * 0.42, CARD_D / 2 + 0.04).applyQuaternion(mq);
       card.current.applyImpulseAtPoint(
-        { x: gust * 0.006, y: 0, z: gust * 0.0016 },
+        { x: gust * 0.006 * fdt, y: 0, z: gust * 0.0016 * fdt },
         { x: ct.x + windPt.x, y: ct.y + windPt.y, z: ct.z + windPt.z },
         true,
       );
@@ -548,7 +555,10 @@ function Lanyard({
       // 3D-ness clearly, WITHOUT adding sideways sway (decoupled from the linear breeze above).
       const yaw = (0.6 * Math.sin(ts * 0.5 + 0.3) + 0.4 * Math.sin(ts * 1.13 + 1.7)) * warm;
       vec.set(0, 1, 0).applyQuaternion(mq); // card's up axis in world ⇒ true yaw regardless of tilt
-      card.current.applyTorqueImpulse({ x: vec.x * yaw * 0.01, y: vec.y * yaw * 0.01, z: vec.z * yaw * 0.01 }, true);
+      card.current.applyTorqueImpulse(
+        { x: vec.x * yaw * 0.01 * fdt, y: vec.y * yaw * 0.01 * fdt, z: vec.z * yaw * 0.01 * fdt },
+        true,
+      );
       // soft, damped return-to-forward so the wind sway eases back to facing the viewer. The yaw
       // (Y) gain is LOWER than roll/pitch ⇒ the card turns more freely left↔right (more 3D tilt)
       // while still never drifting away.
@@ -568,7 +578,11 @@ function Lanyard({
         const ky = 0.03; // softer yaw ⇒ freer left↔right turn
         const kd = 0.03;
         card.current.applyTorqueImpulse(
-          { x: (eq.x / s) * angle * k - av.x * kd, y: (eq.y / s) * angle * ky - av.y * kd, z: (eq.z / s) * angle * k - av.z * kd },
+          {
+            x: ((eq.x / s) * angle * k - av.x * kd) * fdt,
+            y: ((eq.y / s) * angle * ky - av.y * kd) * fdt,
+            z: ((eq.z / s) * angle * k - av.z * kd) * fdt,
+          },
           true,
         );
       }

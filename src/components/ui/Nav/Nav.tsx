@@ -13,7 +13,7 @@
  * the CSS module each config passes in.
  */
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import NavInner from "./NavInner";
 import { type NavItem } from "./navLinks";
 
@@ -45,6 +45,20 @@ export default function Nav({ config }: { config: NavConfig }) {
   const isCurrent = (i: NavItem) => currentRoute !== undefined && i.route === currentRoute;
   const [past, setPast] = useState(false);
   const [open, setOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false); // desktop "Product" mega sheet
+  const megaTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const openMega = () => {
+    clearTimeout(megaTimer.current);
+    setProductOpen(true);
+  };
+  const scheduleCloseMega = () => {
+    clearTimeout(megaTimer.current);
+    megaTimer.current = setTimeout(() => setProductOpen(false), 120); // hover-intent grace
+  };
+  const closeMega = () => {
+    clearTimeout(megaTimer.current);
+    setProductOpen(false);
+  };
 
   useEffect(() => {
     let raf = 0;
@@ -52,6 +66,7 @@ export default function Nav({ config }: { config: NavConfig }) {
       raf = 0;
       const p = window.scrollY > window.innerHeight * 0.5;
       setPast(p);
+      setProductOpen(false); // scrolling dismisses the mega sheet (Apple-style)
       if (hideOverHero && !p) setOpen(false); // bar hides at the top ⇒ close the menu with it
     };
     const onScroll = () => {
@@ -78,12 +93,16 @@ export default function Nav({ config }: { config: NavConfig }) {
   return (
     <>
       <div
-        className={`${styles.navScrim} ${shown && open ? `${styles.navScrimShown} backdrop-blur-[5px]` : ""}`}
-        onClick={() => setOpen(false)}
+        className={`${styles.navScrim} ${(shown && open) || productOpen ? `${styles.navScrimShown} backdrop-blur-[5px]` : ""}`}
+        onClick={() => {
+          setOpen(false);
+          closeMega();
+        }}
         aria-hidden
       />
       <nav
         className={`${styles.nav} ${past || alwaysShown ? styles[pastClass] : ""} ${open ? styles.navOpen : ""} backdrop-blur-[12px]`}
+        data-product-open={productOpen ? "1" : undefined}
         aria-label={ariaLabel}
         aria-hidden={hideOverHero ? !past : undefined}
       >
@@ -93,8 +112,18 @@ export default function Nav({ config }: { config: NavConfig }) {
           hrefFor={hrefFor}
           isCurrent={isCurrent}
           open={open}
-          onToggle={() => setOpen((v) => !v)}
-          onNavigate={() => setOpen(false)}
+          onToggle={() => {
+            setOpen((v) => !v);
+            closeMega(); // never leave the desktop mega (and its scrim) lingering
+          }}
+          onNavigate={() => {
+            setOpen(false);
+            closeMega();
+          }}
+          productOpen={productOpen}
+          onMegaEnter={openMega}
+          onMegaLeave={scheduleCloseMega}
+          closeMega={closeMega}
         />
       </nav>
     </>
