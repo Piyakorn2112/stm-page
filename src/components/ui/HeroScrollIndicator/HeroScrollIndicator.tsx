@@ -2,10 +2,11 @@
 
 /**
  * HeroScrollIndicator — a subtle "Scroll Down" cue pinned near the bottom edge of a hero.
- * The inner label mostly rests at low opacity and occasionally rises a few px / brightens
- * (a crafted pulse on the standard ease, no overshoot). The outer span fades the whole cue
- * OUT once the user starts scrolling down, and back IN near the top — a smooth opacity
- * transition. Decorative only (aria-hidden); colour follows the theme; the pulse respects
+ * The label mostly rests at low opacity and occasionally rises a few px / brightens (a crafted
+ * pulse on the standard ease, no overshoot); a hairline tether below it grows in lockstep,
+ * visualising the gap that opens as the label lifts, then collapses back as it settles. The
+ * outer span fades the whole cue OUT once the user starts scrolling down, and back IN near the
+ * top. Decorative only (aria-hidden); colour follows the theme; the pulse respects
  * reduced-motion. Absolutely positioned, so it expects a `position: relative` hero.
  */
 import { useEffect, useState } from "react";
@@ -29,6 +30,7 @@ export default function HeroScrollIndicator({ className }: { className?: string 
       aria-hidden="true"
     >
       <span className={styles.label}>Scroll Down</span>
+      <span className={styles.line} />
     </span>
   );
 }

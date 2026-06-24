@@ -314,13 +314,15 @@ export default function StructureScene({
           transition: `opacity 600ms ease ${revealed ? 250 : 0}ms`,
         }}
       >
-        {/* STM long wordmark (public/STM logo long text.svg). Black artwork, so
-            dark mode inverts it to white. Background-image keeps it a semantic
-            heading (aria-label) without a raw <img>. */}
-        <h1
+        {/* STM long wordmark (public/STM logo long text.svg) — now a SMALL,
+            secondary mark above the headline (the headline carries the hero).
+            Black artwork, so dark mode inverts it to white. Decorative: the
+            brand name is already announced by the nav's home link, so this
+            stays out of the a11y tree; the headline below is the real <h1>. */}
+        <div
+          aria-hidden="true"
           style={{
-            margin: 0,
-            width: "clamp(220px, 48vw, 380px)",
+            width: "clamp(110px, 18vw, 160px)",
             aspectRatio: "806 / 127",
             backgroundImage: "url('/STM%20logo%20long%20text.svg')",
             backgroundRepeat: "no-repeat",
@@ -328,37 +330,35 @@ export default function StructureScene({
             backgroundSize: "contain",
             filter: theme.dark ? "invert(1)" : undefined,
           }}
+        />
+        <h1
+          style={{
+            margin: "16px 0 0",
+            maxWidth: 640,
+            fontFamily: FONT,
+            fontSize: "clamp(1.5rem, 3.4vw, 2.2rem)",
+            fontWeight: 700,
+            lineHeight: 1.18,
+            letterSpacing: "-0.02em",
+            color: theme.text,
+            textWrap: "balance",
+          }}
         >
-          {/* visually hidden — keeps the heading text for SEO / screen readers */}
-          <span
-            style={{
-              position: "absolute",
-              width: 1,
-              height: 1,
-              padding: 0,
-              margin: -1,
-              overflow: "hidden",
-              clip: "rect(0 0 0 0)",
-              whiteSpace: "nowrap",
-              border: 0,
-            }}
-          >
-            Srang Tech Mai
-          </span>
+          We build software, products, and ventures.
         </h1>
         <p
           style={{
-            margin: "14px 0 0",
-            maxWidth: 520,
+            margin: "10px 0 0",
+            maxWidth: 560,
             fontFamily: FONT,
-            fontSize: "clamp(1.05rem, 1.7vw, 1.3rem)", // same as the sections' .lede
+            fontSize: "clamp(1rem, 1.6vw, 1.15rem)", // secondary to the headline above
             fontWeight: 400,
             lineHeight: 1.55,
             letterSpacing: "-0.01em",
             color: theme.subtext,
           }}
         >
-          {"Structure for what's next."}
+          A small multidisciplinary team across finance, engineering, AI, and design.
         </p>
       </div>
 

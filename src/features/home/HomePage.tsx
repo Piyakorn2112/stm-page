@@ -10,7 +10,7 @@ import { Mission } from "./sections/Mission";
 import { Philosophy } from "./sections/Philosophy";
 import { TakesForm } from "./sections/TakesForm";
 import { Identity } from "./sections/Identity";
-import { Cta } from "./sections/Cta";
+import { Products } from "./sections/Products";
 
 export default function HomePage() {
   return (
@@ -22,7 +22,7 @@ export default function HomePage() {
           <Philosophy />
           <TakesForm />
           <Identity />
-          <Cta />
+          <Products />
         </HomeReveal>
       </main>
       <Footer />

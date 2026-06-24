@@ -47,6 +47,8 @@ const SLOT_W = 0.46;
 const SLOT_H = 0.12;
 const STRAP = 1.28; // rope segment rest length (3 per arm) — slightly taut
 const THICK = 0.22; // flat ribbon width — matches the clip
+const WALL_W = 48; // backdrop plane size (world units). Only ~12 vertical units are ever
+const WALL_H = 40; // in frame, so its square texture is heavily oversampled (see makeWall).
 // name-field hit-target, in card-space (texture v≈0.8 → card y ≈ -0.286·CARD_H). Clicking
 // it focuses the hidden input to rename instead of grabbing the card to swing it.
 const NAME_HIT_Y = -CARD_H * 0.286;
@@ -291,9 +293,9 @@ function makeNoise(): THREE.CanvasTexture {
   return t;
 }
 
-// studio backdrop — a soft radial vignette so the card sits in light, not on a flat slab
+// studio backdrop — a soft radial vignette so the card sits in light, not on a flat slab.
 function makeWall(center: string, edge: string): THREE.CanvasTexture {
-  const S = 512;
+  const S = 1024;
   const c = document.createElement("canvas");
   c.width = c.height = S;
   const x = c.getContext("2d")!;
@@ -307,31 +309,164 @@ function makeWall(center: string, edge: string): THREE.CanvasTexture {
   return t;
 }
 
-const GOBO_BLOBS: [number, number, number, number][] = [
-  [0.22, 0.3, 0.26, 0.9], [0.7, 0.18, 0.3, 0.75], [0.5, 0.55, 0.34, 1], [0.82, 0.6, 0.22, 0.6],
-  [0.3, 0.74, 0.28, 0.8], [0.6, 0.85, 0.2, 0.55], [0.13, 0.6, 0.18, 0.5], [0.88, 0.32, 0.16, 0.45],
-  [0.45, 0.12, 0.18, 0.6], [0.15, 0.15, 0.14, 0.4], [0.74, 0.78, 0.24, 0.7], [0.4, 0.4, 0.2, 0.65],
-];
+// The world Y of the card's printed ring centre (cardFace draws it at face-fraction 0.47,
+// a touch above the middle). The wall mark is vertically centred here so it lines up with the ring.
+const RING_WORLD_Y = CARD_H * (0.5 - 0.47);
+const MARK_OPACITY = 0.2; // resting faintness (the layer is lit, so it still catches studio light)
+const MARK_GAP = 0.25; // desktop: gap between the card's right edge and the mark's left edge
+
+// The faint "Aligned, not isolated." mark, on its OWN high-res transparent layer (not baked
+// into the oversampled wall) so it stays crisp. It's sized in WORLD units, then drawn at a
+// high px-per-world density.
+//   Desktop: two left-aligned lines ("Aligned," / "not isolated.") set to the RIGHT of the
+//     card, like a label beside the badge. It gently fades out while the card is lifted/dragged
+//     off its resting spot and fades back when it returns (see Lanyard's fade calc + WallMark).
+//   Portrait/mobile: the phrase folds to two big lines and the badge nests BETWEEN them
+//     ("Aligned, not" above, "isolated." below) — an oversized editorial backdrop, centred so
+//     where the card crops the type it crops symmetrically. No fade (it's a static backdrop).
+const MARK_PX_PER_WORLD = 256; // hi-res print density (crisp even at the wall's grazing light)
+function makeMark(dark: boolean, portrait: boolean): { tex: THREE.CanvasTexture; w: number; h: number } {
+  const lines = portrait ? ["Aligned, not", "isolated."] : ["Aligned,", "not isolated."];
+  const lineWorld = portrait ? 1.45 : 0.46; // world units tall per line
+  const fontPx = lineWorld * MARK_PX_PER_WORLD;
+  const font = `800 ${fontPx}px system-ui, -apple-system, "Segoe UI", Arial, sans-serif`;
+  const letterSpacing = `${fontPx * 0.01}px`;
+
+  const probe = document.createElement("canvas").getContext("2d")!;
+  probe.font = font;
+  probe.letterSpacing = letterSpacing;
+  const widest = Math.max(...lines.map((l) => probe.measureText(l).width));
+  const lineHeight = fontPx * 1.06;
+  const padX = fontPx * 0.14;
+  const padY = fontPx * 0.24;
+  const cw = Math.ceil(widest + padX * 2);
+  const ch = Math.ceil(lineHeight * (lines.length - 1) + fontPx + padY * 2);
+
+  const c = document.createElement("canvas");
+  c.width = cw;
+  c.height = ch;
+  const x = c.getContext("2d")!;
+  x.fillStyle = dark ? "#ffffff" : "#000000";
+  x.font = font;
+  x.letterSpacing = letterSpacing;
+  // desktop = left-aligned block (the two lines share a left edge); portrait = centred.
+  x.textAlign = portrait ? "center" : "left";
+  x.textBaseline = "middle";
+  const tx = portrait ? cw / 2 : padX;
+  const firstY = padY + fontPx / 2;
+  lines.forEach((l, i) => x.fillText(l, tx, firstY + i * lineHeight));
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8; // stay sharp where the wall light rakes across at a grazing angle
+  return { tex, w: cw / MARK_PX_PER_WORLD, h: ch / MARK_PX_PER_WORLD };
+}
+
+// The wall mark as a scene object. Desktop sits it to the right of the card and eases its
+// opacity toward `fade` (1 → MARK_OPACITY at rest, → 0 when the card is pulled away). Portrait
+// centres it behind the badge at a fixed faintness (no fade). z just behind the card so it's
+// lit by the studio lights but occluded by the card where they overlap.
+function WallMark({
+  mark,
+  fade,
+  portrait,
+}: {
+  mark: { tex: THREE.CanvasTexture; w: number; h: number };
+  fade: { current: number };
+  portrait: boolean;
+}) {
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame((_, delta) => {
+    const m = matRef.current;
+    if (!m) return;
+    const target = portrait ? MARK_OPACITY : MARK_OPACITY * fade.current;
+    m.opacity += (target - m.opacity) * (1 - Math.exp(-delta * 6)); // gentle, frame-rate independent
+  });
+  const pos: [number, number, number] = portrait
+    ? [0, RING_WORLD_Y, -0.8]
+    : [CARD_W / 2 + MARK_GAP + mark.w / 2, RING_WORLD_Y, -0.8];
+  return (
+    <mesh position={pos}>
+      <planeGeometry args={[mark.w, mark.h]} />
+      <meshStandardMaterial ref={matRef} map={mark.tex} transparent opacity={MARK_OPACITY} roughness={1} metalness={0} depthWrite={false} />
+    </mesh>
+  );
+}
+
+// A "window-shaft" gobo (light "cookie") — instead of a dotty cucoloris (round leaf dapples,
+// which read artificial on a flat wall), the bright key is shaped as SUNLIGHT RAKING THROUGH
+// TALL GAPS: several long, soft, parallel strips of light separated by shadow, all at ONE
+// consistent angle (a single motivated source — sun through a window / slats / tree trunks).
+// Each shaft is broken along its length (brightness variation + occasional gaps) so it stays
+// natural — shafts of light, not a mechanical venetian blind. Soft edges keep it atmospheric;
+// DappleSun's slow drift slides the strips so it reads like light through a swaying canopy.
+// Seeded ⇒ deterministic.
+const GOBO_ANGLE = 0.52; // ≈ +30°: the rake direction of every shaft (one motivated source)
 function makeGobo(): THREE.CanvasTexture {
-  const S = 512;
+  const S = 1024;
   const c = document.createElement("canvas");
   c.width = c.height = S;
   const x = c.getContext("2d")!;
-  x.fillStyle = "#0b0b0d";
+  x.fillStyle = "#070708"; // shadow base — light only reaches the wall through the gaps
   x.fillRect(0, 0, S, S);
-  for (const [bx, by, r, b] of GOBO_BLOBS) {
-    const cx = bx * S;
-    const cy = by * S;
-    const rad = r * S;
-    const g = x.createRadialGradient(cx, cy, 0, cx, cy, rad);
+
+  let seed = 0x77a13b;
+  const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+
+  // one soft, vertically-elongated light shard (a segment of a shaft)
+  const shard = (cx: number, cy: number, w: number, h: number, b: number) => {
+    x.save();
+    x.translate(cx, cy);
+    x.scale(1, h / w); // stretch the round falloff into a streak along the shaft
+    const g = x.createRadialGradient(0, 0, 0, 0, 0, w);
     g.addColorStop(0, `rgba(255,255,255,${b})`);
-    g.addColorStop(0.6, `rgba(255,255,255,${b * 0.35})`);
-    g.addColorStop(1, "rgba(0,0,0,0)");
+    g.addColorStop(0.62, `rgba(255,255,255,${b})`); // flat bright core ⇒ the strip reads as a band
+    g.addColorStop(0.86, `rgba(255,255,255,${b * 0.28})`);
+    g.addColorStop(1, "rgba(255,255,255,0)");
     x.fillStyle = g;
     x.beginPath();
-    x.arc(cx, cy, rad, 0, Math.PI * 2);
+    x.arc(0, 0, w, 0, Math.PI * 2);
+    x.fill();
+    x.restore();
+  };
+
+  // draw the shafts in a ROTATED frame so they rake across the wall at GOBO_ANGLE
+  x.save();
+  x.translate(S / 2, S / 2);
+  x.rotate(GOBO_ANGLE);
+  x.translate(-S / 2, -S / 2);
+  for (let lx = -S * 0.3; lx < S * 1.3; ) {
+    const laneW = S * (0.04 + rnd() * 0.06); // bold, clearly-readable strips across the whole span
+    const bright = 0.7 + rnd() * 0.3;
+    // walk down the lane dropping LONG elongated shards, with occasional gaps + brightness
+    // variation so the shaft breaks up naturally instead of being a flat bar
+    for (let ly = -S * 0.3; ly < S * 1.3; ) {
+      if (rnd() > 0.12) {
+        const segH = laneW * (5 + rnd() * 9); // long segments ⇒ continuous shafts
+        shard(lx + (rnd() - 0.5) * laneW * 0.6, ly + segH / 2, laneW, segH, bright * (0.62 + rnd() * 0.38));
+        ly += segH * (0.85 + rnd() * 0.4);
+      } else {
+        ly += laneW * (1.5 + rnd() * 2); // a shadow gap along the shaft
+      }
+    }
+    lx += laneW + S * (0.07 + rnd() * 0.07); // a shadow gap to the next shaft
+  }
+  x.restore();
+
+  // a couple of broad, soft shadows for depth across the shafts (kept subtle)
+  for (let i = 0; i < 4; i++) {
+    const sx = rnd() * S;
+    const sy = rnd() * S;
+    const rr = S * (0.1 + rnd() * 0.12);
+    const g = x.createRadialGradient(sx, sy, 0, sx, sy, rr);
+    g.addColorStop(0, `rgba(7,7,8,${0.3 + rnd() * 0.3})`);
+    g.addColorStop(1, "rgba(7,7,8,0)");
+    x.fillStyle = g;
+    x.beginPath();
+    x.arc(sx, sy, rr, 0, Math.PI * 2);
     x.fill();
   }
+
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
@@ -371,6 +506,38 @@ function RenderThrottle({ maxFps }: { maxFps: number }) {
   return null;
 }
 
+// The SHAFT light — a SEPARATE, ADDITIVE layer carrying the foliage gobo. The scene is already
+// fully lit by the clean key + fill + ambient (as bright as before); this only ADDS bright
+// raking strips on top (its shadow gaps add nothing, so nothing ever gets darker). It casts no
+// shadow (the key owns the card's shadow) and drifts on a slow, gusty path so the strips sway
+// like sunlight through wind-blown leaves. It's the only animated light; everything else is static.
+function ShaftLight({ gobo, color, intensity }: { gobo: THREE.Texture; color: string; intensity: number }) {
+  const ref = useRef<THREE.SpotLight>(null);
+  useFrame((s) => {
+    const k = ref.current;
+    if (!k) return;
+    const t = s.clock.elapsedTime;
+    k.position.set(
+      6 + Math.sin(t * 0.16) * 0.8 + Math.sin(t * 0.41 + 1.3) * 0.3,
+      8.5 + Math.cos(t * 0.12) * 0.5,
+      4.5 + Math.sin(t * 0.23 + 2.1) * 0.3,
+    );
+  });
+  return (
+    <spotLight
+      ref={ref}
+      position={[6, 8.5, 4.5]}
+      angle={0.95}
+      penumbra={1}
+      intensity={intensity}
+      decay={0}
+      distance={40}
+      color={color}
+      map={gobo}
+    />
+  );
+}
+
 function Lanyard({
   theme,
   name,
@@ -379,6 +546,7 @@ function Lanyard({
   onRequestFocus,
   onRequestBlur,
   onFirstPaint,
+  onFade,
 }: {
   theme: Theme;
   name: string;
@@ -387,6 +555,7 @@ function Lanyard({
   onRequestFocus: () => void;
   onRequestBlur: () => void;
   onFirstPaint?: () => void;
+  onFade: (v: number) => void;
 }) {
   const hubPivot = useRef<RapierRigidBody>(null!); // fixed point the hinge rotates around
   const hub = useRef<RapierRigidBody>(null!); // the near-weightless rotating "circle" (revolute about Z)
@@ -621,6 +790,14 @@ function Lanyard({
     curveB.points[3].set(hx, hy, hz);
     for (let i = 0; i < SAMPLES; i++) curveB.getPoint(i / (SAMPLES - 1), ptsB[i]);
     updateRibbon(ribbonB, ptsB, THICK / 2);
+
+    // Desktop wall-mark fade target: 1 at the resting pose, easing to 0 as the card is lifted /
+    // dragged / swung away from its composition (rest pose is the origin, facing forward), and
+    // back when it returns. WallMark eases its opacity toward this; ignored on portrait.
+    const dist = Math.hypot(ct.x, ct.y, ct.z);
+    const turn = 2 * Math.acos(Math.min(1, Math.abs(cr.w))); // radians off facing-forward
+    const off = dist + turn * 0.5;
+    onFade(1 - Math.min(1, Math.max(0, (off - 0.32) / (1.5 - 0.32))));
   });
 
   // Tuned toward CRITICAL damping (not over-damped/dead): the joints are kept
@@ -756,6 +933,11 @@ export default function LanyardCard({
   const [dark, setDark] = useState(
     () => (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches) || false,
   );
+  // portrait/narrow ⇒ the wall mark folds to a tall stack the badge nests into (matches the
+  // site's 880px mobile breakpoint). Init from the real query so the texture never re-bakes post-mount.
+  const [portrait, setPortrait] = useState(
+    () => (typeof window !== "undefined" && window.matchMedia?.("(max-width: 880px)").matches) || false,
+  );
   const [visible, setVisible] = useState(true);
   const [ctxKey, setCtxKey] = useState(0);
   const [ready, setReady] = useState(false);
@@ -764,6 +946,14 @@ export default function LanyardCard({
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const update = () => setDark(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 880px)");
+    const update = () => setPortrait(mq.matches);
     update();
     mq.addEventListener?.("change", update);
     return () => mq.removeEventListener?.("change", update);
@@ -783,11 +973,17 @@ export default function LanyardCard({
     return () => clearTimeout(t);
   }, []);
 
+  // The wall is a touch deeper than the card so the additive shafts have tonal HEADROOM to read
+  // (an additive highlight is invisible on a near-white surface — it just clips). The card +
+  // straps + clip are separate bright materials, so they stay as bright as before; only the
+  // backdrop sweep is deepened, which also makes the white badge pop more (product-shot look).
   const theme: Theme = dark
-    ? { band: "#101013", clip: "#2b2d34", wall: "#34363f", wall2: "#212329", key: "#fbfcff", fill: "#eef0f4", ground: "#191a20" }
-    : { band: "#141417", clip: "#1b1c20", wall: "#f1eee9", wall2: "#e2ded7", key: "#fffaf7", fill: "#f4f5f7", ground: "#e8e4dd" };
+    ? { band: "#101013", clip: "#2b2d34", wall: "#2b2d35", wall2: "#191a20", key: "#fbfcff", fill: "#eef0f4", ground: "#191a20" }
+    : { band: "#141417", clip: "#1b1c20", wall: "#dcd6cc", wall2: "#c7c1b6", key: "#fffaf7", fill: "#f4f5f7", ground: "#e8e4dd" };
   const gobo = useMemo(() => makeGobo(), []);
   const wallTex = useMemo(() => makeWall(theme.wall, theme.wall2), [theme.wall, theme.wall2]);
+  const mark = useMemo(() => makeMark(dark, portrait), [dark, portrait]);
+  const markFade = useRef(1); // 1 = card at rest (mark shown); → 0 as it's dragged away (desktop)
 
   return (
     <div
@@ -818,7 +1014,7 @@ export default function LanyardCard({
         <RenderThrottle maxFps={90} />
 
         <mesh position={[0, 0, -5]}>
-          <planeGeometry args={[48, 40]} />
+          <planeGeometry args={[WALL_W, WALL_H]} />
           <meshStandardMaterial map={wallTex} roughness={0.97} metalness={0} />
         </mesh>
         {/* shadow-catcher just behind the card so the drop shadow reads without darkening the whole wall */}
@@ -826,12 +1022,15 @@ export default function LanyardCard({
           <planeGeometry args={[20, 22]} />
           <shadowMaterial opacity={0.26} />
         </mesh>
+        {/* faint, crisp wall mark on its own hi-res layer (desktop fades out as the card is pulled away) */}
+        <WallMark mark={mark} fade={markFade} portrait={portrait} />
 
         <ambientLight intensity={0.36} />
         <hemisphereLight intensity={0.3} color={theme.key} groundColor={theme.ground} />
 
-        {/* KEY — a soft studio softbox raking from the upper-side (not head-on),
-            broad cone + max penumbra + soft shadow so it shapes the card, not blasts it */}
+        {/* KEY — a clean, bright studio softbox raking from the upper-side (broad cone + max
+            penumbra + soft shadow so it shapes the card, not blasts it). No gobo here, so the
+            card + scene stay as evenly bright as before; the shafts are a separate layer below. */}
         <spotLight
           position={[7.5, 8, 4.5]}
           angle={0.95}
@@ -840,13 +1039,17 @@ export default function LanyardCard({
           decay={0}
           distance={40}
           color={theme.key}
-          map={gobo}
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-bias={-0.0002}
           shadow-radius={12}
         />
+        {/* additive foliage SHAFTS — a separate, brighter layer of raking light strips that
+            drifts gently; only adds light, so nothing gets darker than the clean key scene. A
+            warm SUN hue makes the strips read by colour (warm streaks on the cool wall), not just
+            brightness, so they stay visible without having to blow out the highlights. */}
+        <ShaftLight gobo={gobo} color="#ffe6bf" intensity={dark ? 2.2 : 3.0} />
         {/* soft FILL from the opposite lower-side */}
         <spotLight position={[-6.5, 2.5, 6]} angle={0.95} penumbra={1} intensity={1.7} decay={0} color={theme.fill} />
         {/* RIM rig — two BACK lights raking from behind the card so its bevelled edges and
@@ -868,6 +1071,9 @@ export default function LanyardCard({
               // defer past a painted opacity:0 frame so the CSS transition actually engages
               // (on cached reloads the paint resolves instantly and would skip the fade)
               requestAnimationFrame(() => requestAnimationFrame(() => setReady(true)));
+            }}
+            onFade={(v) => {
+              markFade.current = v;
             }}
           />
         </Physics>

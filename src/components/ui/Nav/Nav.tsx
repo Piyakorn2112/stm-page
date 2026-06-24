@@ -5,7 +5,8 @@
  * supplied by a `NavConfig` (see each feature's `nav.config.tsx`), so the scroll/menu
  * logic lives in ONE place:
  *   • home  — hidden over the hero, revealed once scrolled past half the viewport
- *             (`hideOverHero: true`); the menu closes when the bar hides.
+ *             (`hideOverHero: true`); the menu closes when the bar hides. On desktop it also
+ *             peeks open on hover near the top edge, independent of scroll position.
  *   • build — always visible; the bar just firms up once scrolled past the hero
  *             (`hideOverHero: false`).
  * On mobile the links collapse behind a hamburger that EXPANDS the bar in height
@@ -16,6 +17,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import NavInner from "./NavInner";
 import { type NavItem } from "./navLinks";
+
+const HOVER_REVEAL_PX = 96; // px from the top — hovering here peeks a hidden-over-hero bar (desktop only)
 
 // NOTE: this config crosses the server→client boundary (pages are Server Components),
 // so it must stay SERIALISABLE — no functions. The href/current predicates are derived
@@ -44,9 +47,11 @@ export default function Nav({ config }: { config: NavConfig }) {
   const hrefFor = (i: NavItem) => i.route ?? `${anchorPrefix}#${i.anchor}`;
   const isCurrent = (i: NavItem) => currentRoute !== undefined && i.route === currentRoute;
   const [past, setPast] = useState(false);
+  const [hovered, setHovered] = useState(false); // desktop-only: peeking the bar on hover, before scrolling past the hero
   const [open, setOpen] = useState(false);
   const [productOpen, setProductOpen] = useState(false); // desktop "Product" mega sheet
   const megaTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const openMega = () => {
     clearTimeout(megaTimer.current);
     setProductOpen(true);
@@ -80,6 +85,32 @@ export default function Nav({ config }: { config: NavConfig }) {
     };
   }, [hideOverHero]);
 
+  // Desktop-only "peek": hovering the top strip reveals the bar (same curve as the scroll
+  // reveal) without touching the scroll-driven `past` state or its menu-close side effect.
+  useEffect(() => {
+    if (!hideOverHero) return;
+    const mq = window.matchMedia("(min-width: 721px)");
+    const reset = () => setHovered(false);
+    const onMove = (e: MouseEvent) => {
+      if (!mq.matches) return;
+      clearTimeout(hoverTimer.current);
+      if (e.clientY < HOVER_REVEAL_PX) {
+        setHovered(true);
+      } else {
+        hoverTimer.current = setTimeout(() => setHovered(false), 160); // grace, avoids edge flicker
+      }
+    };
+    mq.addEventListener?.("change", reset);
+    window.addEventListener("mousemove", onMove, { passive: true });
+    document.addEventListener("mouseleave", reset);
+    return () => {
+      mq.removeEventListener?.("change", reset);
+      window.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseleave", reset);
+      clearTimeout(hoverTimer.current);
+    };
+  }, [hideOverHero]);
+
   // close the mobile menu once the layout is back to desktop
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 721px)");
@@ -88,7 +119,7 @@ export default function Nav({ config }: { config: NavConfig }) {
     return () => mq.removeEventListener?.("change", onChange);
   }, []);
 
-  const shown = hideOverHero ? past : true; // whether the bar is interactive
+  const shown = hideOverHero ? past || hovered : true; // whether the bar is interactive
 
   return (
     <>
@@ -101,10 +132,10 @@ export default function Nav({ config }: { config: NavConfig }) {
         aria-hidden
       />
       <nav
-        className={`${styles.nav} ${past || alwaysShown ? styles[pastClass] : ""} ${open ? styles.navOpen : ""} backdrop-blur-[12px]`}
+        className={`${styles.nav} ${past || alwaysShown || hovered ? styles[pastClass] : ""} ${open ? styles.navOpen : ""} backdrop-blur-[12px]`}
         data-product-open={productOpen ? "1" : undefined}
         aria-label={ariaLabel}
-        aria-hidden={hideOverHero ? !past : undefined}
+        aria-hidden={hideOverHero ? !(past || hovered) : undefined}
       >
         <NavInner
           styles={styles}

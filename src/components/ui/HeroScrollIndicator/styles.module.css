@@ -1,14 +1,18 @@
 /* Subtle scroll cue for hero sections — a small "Scroll Down" label sat near the bottom
    edge. Quiet on purpose: it mostly rests at low opacity (theme's muted ink, light/dark
    aware) and only occasionally rises a few px + brightens, then settles back. The rise/fall
-   use --ease-standard (the nav curve) so there's no overshoot.
-   Outer span = the scroll-driven fade; inner label = the resting pulse. */
+   use --ease-standard (the nav curve) so there's no overshoot. A hairline tether sits tight
+   below the label and grows in lockstep with the same rise — it visualises the gap that opens
+   between the label's base and lifted position, then collapses back to 0 as it settles. The
+   tether is an absolutely-positioned overlay (not a flow sibling), so it never shifts the
+   label's own resting position. Outer span = the scroll-driven fade; inner children = the
+   resting pulse. */
 .indicator {
   position: absolute;
   bottom: clamp(8px, 1.4vh, 14px);
   left: 50%;
   z-index: 3;
-  /* base transform keeps it centred; the pulse lives on the inner label */
+  /* base transform keeps it centred; the pulse lives on the inner children */
   transform: translateX(-50%);
   font-size: 0.74rem;
   font-weight: 500;
@@ -27,25 +31,34 @@
 .label {
   display: inline-block;
   opacity: 0.26;
-  animation: heroScrollPulse 5s var(--ease-standard) infinite;
+  animation: heroScrollPulse 6.4s var(--ease-standard) infinite;
 }
 
-/* long rest, then a single small rise + brighten, then settle. The RISE (active leg) launches
-   fast then eases — it reads as energy + intent; the SETTLE leg uses a slow, natural ease so it
-   drifts back to rest rather than mirroring the rise. */
+/* long rest, then a single small rise + brighten, a brief hang at the peak, then a long, slow
+   settle. The key moment (rest→rise) sits at 51% — ~15pp earlier than before — which hands the
+   freed time straight to the EXIT leg (69%→100%, now ~31% of the cycle vs ~16% before); the RISE
+   (51%→68%) keeps its original width/ease so the launch still reads as energy + intent, and the
+   much longer EXIT leans on --ease-standard (the site's "most motion up front, then a long
+   gentle decay" curve) over more time, so the return to idle reads as a slow, barely-there drift
+   rather than a mirrored bounce-back. */
 @keyframes heroScrollPulse {
   0%,
-  66% {
+  51% {
     transform: translateY(0);
     opacity: 0.26;
-    /* rise leg (66%→83%): fast at the start, decelerating ⇒ energetic launch + direction */
+    /* rise leg (51%→68%): fast at the start, decelerating ⇒ energetic launch + direction */
     animation-timing-function: cubic-bezier(0.12, 0.9, 0.25, 1);
   }
-  83% {
+  68% {
     transform: translateY(-5px);
-    opacity: 0.6;
-    /* settle leg (83%→100%): gentle ease-in-out ⇒ a natural, slow return */
-    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+    opacity: 0.8;
+    animation-timing-function: var(--ease-standard);
+  }
+  69% {
+    transform: translateY(-5px);
+    opacity: 0.8;
+    /* exit leg (69%→100%) */
+    animation-timing-function: var(--ease-standard);
   }
   100% {
     transform: translateY(0);
@@ -53,9 +66,62 @@
   }
 }
 
+/* the trail: a fixed-height mark scaled from its BOTTOM, anchored over the label's lower half
+   via absolute position (NOT flex/flow) so it never pushes the label's own resting spot. Timed
+   off the same rise as the label above (just its own shape: a rise then a dissolve, not a
+   mirrored fall), so the two read as one gesture. The gradient fade (top solid → bottom
+   transparent) reads as a trail receding from the text, not a hairline. */
+.line {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  margin-top: 4px; /* tight gap to the label */
+  margin-left: -0.75px; /* centre (half its own width) — kept off `transform`, which carries the pulse */
+  width: 1.5px;
+  height: 16px;
+  background: linear-gradient(to bottom, var(--muted), transparent); /* fades at the bottom ⇒ a trail, not a hairline */
+  transform-origin: bottom;
+  transform: scaleY(0);
+  opacity: 0;
+  border-radius: 2px;
+  animation: heroScrollLine 6.4s var(--ease-standard) infinite;
+}
+
+@keyframes heroScrollLine {
+  0% {
+    transform: scaleY(0);
+    opacity: 0;
+    filter: blur(0px);
+  }
+  51% {
+    transform: scaleY(0);
+    opacity: 0;
+    filter: blur(0px);
+    animation-timing-function: cubic-bezier(0.12, 0.9, 0.25, 1);
+  }
+  71% {
+    transform: scaleY(1);
+    opacity: 0.7;
+    filter: blur(0px);
+    /* exit leg (71%→98%): same --ease-standard hand-off as the label, stretched out the same
+       way, so the dissolve reads as part of the same slow drift rather than its own motion */
+    animation-timing-function: var(--ease-standard);
+  }
+  98% {
+    transform: scaleY(0.5);
+    opacity: 0;
+    filter: blur(6px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .label {
     animation: none;
     opacity: 0.4; /* readable as a static label without the pulse */
+  }
+  .line {
+    animation: none;
+    opacity: 0.3;
+    transform: scaleY(0.5); /* small static tick instead of a pulsing tether */
   }
 }
