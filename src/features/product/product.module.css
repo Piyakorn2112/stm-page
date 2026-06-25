@@ -1,4 +1,10 @@
-/* /product — minimal placeholder. Nav + a centred "Product / coming soon" + footer. */
+/* /product — landing hero. Shared hero convention: full-viewport section (full width,
+   100dvh, clipped) with the scroll cue pinned bottom-centre.
+
+   The brand ring is centred on `.stage` (a point near the TOP). The product logos ride a
+   circular ARC whose centre (`--arc-cy`) is BELOW the content — so the logos occupy the
+   TOP of that dome and RISE UP from the bottom as they cycle, peaking at the apex. They
+   stay upright (counter-rotation) and fade in/out at the dome's lower edges. */
 .page {
   position: relative;
   min-height: 100vh;
@@ -7,24 +13,227 @@
   display: flex;
   flex-direction: column;
 }
+
 .hero {
-  flex: 1;
-  display: grid;
-  place-items: center;
-  padding: 140px 24px 96px;
-  text-align: center;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden; /* clips the ring/arc that bleed off the edges */
+  /* geometry: the colour ring is centred on `.stage` (the viewport centre, size-
+     independent so it's truly centred on every screen). The logo-arc circle is centred
+     FAR below at (50%, --arc-cy), so the logos ride the TOP of a big, nearly-HORIZONTAL
+     dome whose apex is at --apex. A large --arc-r flattens the arc; --arc-a the span. */
+  --arc-r: clamp(620px, 96vh, 1180px);
+  --apex: 80vh; /* y of the arc apex — the featured logo */
+  --arc-cy: calc(var(--apex) + var(--arc-r));
+  --arc-a: 60deg;
+  --cycle: 15s; /* time for one logo to sweep the full arc */
 }
-.title {
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+/* NOTE: the arc geometry is the SAME on every screen — on a narrow phone the arc simply
+   gets CROPPED by the left/right edges (logos keep their size); we do not shrink it. */
+
+/* the centroid point — the viewport centre */
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  z-index: 1;
+}
+
+/* ── ring (truly centred on the centroid; blooms up on enter) ─────────────────── */
+.ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  /* translate(-50%,-50%) centres the canvas on the stage point regardless of its size
+     ⇒ identical centring on desktop AND mobile (no size-dependent offset) */
+  transform: translate(-50%, -50%) scale(0.32);
+  transition: transform 900ms var(--ease-overshoot);
+  will-change: transform;
+}
+.entered .ring {
+  transform: translate(-50%, -50%) scale(1.45);
+}
+
+/* Two concentric ring layers inside the (shared) bloom wrapper. The front spins gently
+   one way; the back is scaled up + faded down + spins the OPPOSITE way ⇒ a slow,
+   counter-rotating mandala. The spin lives on these inner elements so it never fights
+   the `.ring` bloom transform. transform-origin is the canvas centre (default). */
+.ringFxFront {
+  display: block;
+  animation: ringSpinFront 34s linear infinite;
+}
+.ringFxBack {
+  display: block;
+  opacity: 0.4;
+  filter: saturate(1.3);
+  animation: ringSpinBack 128s linear infinite;
+}
+@keyframes ringSpinFront {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ringSpinBack {
+  from {
+    transform: rotate(0deg) scale(1.35);
+  }
+  to {
+    transform: rotate(-360deg) scale(1.35);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ringFxFront {
+    animation: none;
+  }
+  .ringFxBack {
+    animation: none;
+    transform: scale(1.35); /* keep the bigger faint backdrop, just no spin */
+  }
+}
+
+/* ── logo arc (orbits a centroid BELOW the content ⇒ a dome) ─────────────────── */
+.arc {
+  position: absolute;
+  left: 50%;
+  top: var(--arc-cy);
+  width: 0;
+  height: 0;
+  z-index: 2; /* above the ring (its .stage is z-index 1), below the headline (z-index 3) */
+  opacity: 0;
+  transition: opacity 820ms var(--ease-standard) 460ms; /* fades in last */
+}
+.entered .arc {
+  opacity: 1;
+}
+
+/* each logo hangs ABOVE the centroid at radius --arc-r (translate up ⇒ top of the dome);
+   static spread by --i is the reduced-motion / no-animation fallback (cycle overrides). */
+.logoOrbit {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  transform: rotate(calc(var(--arc-a) * (0.6667 * var(--i) - 1)))
+    translate(0, calc(var(--arc-r) * -1))
+    rotate(calc(var(--arc-a) * (1 - 0.6667 * var(--i))));
+}
+.logo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  /* sized off viewport HEIGHT (not width) so the logos stay big on narrow phones —
+     the arc just crops instead of shrinking them */
+  width: clamp(250px, 38vh, 380px);
+  height: clamp(64px, 9.5vh, 96px);
+  transform: translate(-50%, -50%);
+  /* monochrome SVG masked with the theme ink ⇒ correct in light AND dark mode */
+  background-color: var(--fg);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+/* a little bigger on desktop (width-driven there, so it can grow past the vh cap) */
+@media (min-width: 721px) {
+  .logo {
+    width: clamp(340px, 26vw, 480px);
+    height: clamp(86px, 6.6vw, 122px);
+  }
+}
+
+/* The cycle: each logo sweeps the arc from one edge to the other (constant angular
+   speed) while fading in at the entering edge and out at the leaving edge, so the
+   wrap is invisible. Four logos, quarter-cycle apart ⇒ a continuous stream. */
+@media (prefers-reduced-motion: no-preference) {
+  .logoOrbit {
+    animation: logoOrbit var(--cycle) linear infinite;
+    animation-delay: calc(var(--i) * var(--cycle) / -4);
+  }
+  .logo {
+    animation: logoFade var(--cycle) ease-in-out infinite;
+    animation-delay: calc(var(--i) * var(--cycle) / -4);
+  }
+}
+@keyframes logoOrbit {
+  0% {
+    transform: rotate(calc(var(--arc-a) * -1)) translate(0, calc(var(--arc-r) * -1)) rotate(var(--arc-a));
+  }
+  100% {
+    transform: rotate(var(--arc-a)) translate(0, calc(var(--arc-r) * -1)) rotate(calc(var(--arc-a) * -1));
+  }
+}
+/* Peaked, not plateaued: only the logo at the dome's apex is full size + opacity; its
+   neighbours shrink and fade as they ride down toward the edges, so they read as
+   receding along the arc (depth) instead of colliding with the featured one. */
+@keyframes logoFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.34);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.34);
+  }
+}
+
+/* ── headline (between the ring and the rising arc) ──────────────────────────── */
+.heroTitle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  /* larger than the global .heading — this is the hero focal text (bigger floor for
+     mobile, bigger cap for desktop); still balanced multi-line breaks */
+  font-size: clamp(2.7rem, 7vw, 4.8rem);
+  font-weight: 680;
+  line-height: 1.04;
+  letter-spacing: -0.032em;
   color: var(--fg);
+  text-align: center;
+  text-wrap: balance;
+  max-width: 22ch;
+  /* enter: fade + a small lift, just after the ring's bloom */
+  opacity: 0;
+  transform: translate(-50%, calc(-50% + 18px));
+  transition:
+    opacity 720ms var(--ease-standard) 240ms,
+    transform 720ms var(--ease-standard) 240ms;
 }
-.note {
-  margin-top: 12px;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--faint);
+.entered .heroTitle {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+/* inline lucide icons in the tagline (systems / businesses / everyday). Sized in `em` so
+   they scale with the headline, kept on the same line as their word, and inheriting the
+   heading ink (currentColor ⇒ correct in light + dark). */
+.tagWord {
+  white-space: nowrap;
+}
+.tagIcon {
+  display: inline-block;
+  width: 0.78em;
+  height: 0.78em;
+  margin-right: 0.18em;
+  vertical-align: -0.12em; /* optically centre on the cap height */
+  color: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring,
+  .heroTitle,
+  .arc {
+    transition: none;
+  }
 }

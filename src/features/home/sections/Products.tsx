@@ -7,11 +7,11 @@
  * other section links), alternating sides row to row.
  *
  * Each row carries its product's raw brand hex via `--p-raw`; the visible `--accent` is
- * DERIVED from it in CSS (home.module.css) rather than used raw, because the lighter brand
- * hexes (beacon, latent-write) are too low-contrast as text directly on a light surface —
- * light mode mixes it toward black, dark mode uses it pure (it already reads fine on a
- * near-black page background). `.productName` and the row's `SectionLink` both read that
- * one derived `--accent`, so the name and its "Explore" link always match.
+ * DERIVED from it in CSS (home.module.css) via a relative oklch lightness/chroma shift,
+ * not used raw — light mode darkens it, dark mode lightens + slightly desaturates it,
+ * by the same perceptual amount for every hex regardless of how light/saturated it
+ * starts out. `.productName` and the row's `SectionLink` both read that one derived
+ * `--accent`, so the name and its "Explore" link always match.
  */
 import type { CSSProperties } from "react";
 import { PRODUCTS, productHref } from "@/components/ui/Nav/navLinks";

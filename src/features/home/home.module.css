@@ -195,11 +195,16 @@
    the text. Sides alternate row to row (DOM order is swapped by the caller).
 
    Each row's `.productText` carries the product's raw brand hex as `--p-raw`
-   (set inline by the caller) and derives the VISIBLE `--accent` from it here:
-   light mode mixes it toward black (the lighter hexes — beacon, latent-write —
-   are too low-contrast as text on a light surface otherwise); dark mode uses it
-   pure, since it already reads fine on a near-black page background. `.productName`
-   and the row's SectionLink both read that one derived `--accent`, so they match. */
+   (set inline by the caller) and derives the VISIBLE `--accent` from it here, via a
+   RELATIVE oklch adjustment (shift the raw hue's own lightness, don't mix toward
+   black/white in srgb): srgb mixing scales the gamma-encoded channels directly, which
+   crushes already-light hexes (beacon, latent-write) much harder than dark ones
+   (members, cmission) for the same mix ratio — same bug as just using the raw hex on
+   dark, which is fine for the already-light hexes but stays distractingly neon for the
+   more saturated ones. A fixed oklch L delta darkens/lightens every hex by the same
+   PERCEIVED amount regardless of its native lightness, and the paired chroma trim keeps
+   dark mode's lift "slight" (per spec) rather than a full graphic-vivid swatch.
+   `.productName` and the row's SectionLink both read the one derived `--accent`. */
 .productList {
   margin-top: clamp(48px, 6vw, 80px);
   display: flex;
@@ -224,11 +229,11 @@
   display: block;
 }
 .productText {
-  --accent: color-mix(in srgb, var(--p-raw) 70%, black);
+  --accent: oklch(from var(--p-raw) calc(l - 0.12) calc(c * 0.88) h);
 }
 @media (prefers-color-scheme: dark) {
   .productText {
-    --accent: var(--p-raw);
+    --accent: oklch(from var(--p-raw) calc(l + 0.08) calc(c * 0.88) h);
   }
 }
 .productName {

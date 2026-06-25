@@ -36,8 +36,10 @@ import {
   centreLine,
   chargeField,
   oklabToCss,
+  hexToOklab,
   makeHover,
   type Hover,
+  type Lab,
 } from "@stm-ring";
 
 // ── "Still Water" reveal ─────────────────────────────────────────────────────
@@ -65,6 +67,16 @@ const GLIDE_MS = 1200;
 // here (constant, not morph·dt) so it stays alive without ACCELERATING the bloom.
 const AMBIENT_SPIN = 1.0;
 const REST_EPS = 0.12; // below this the wire is "at rest" (a new seed blooms)
+
+// ── vivid full-colour mode (opt-in via `colorCycle`) ──────────────────────────
+// Instead of the seed's single-base charge arc over a dark base, paint the WHOLE
+// wire as a smooth perceptual (OKLab) LOOP through the given brand colours, drifting
+// around the ring as it spins — the colours blend into one another like the matrix
+// boot-wave rather than sitting as one lit arc. oklabToCss gamut-maps to the sRGB
+// edge, so the blend stays vivid; a small chroma boost keeps the midpoints punchy.
+const CYCLE_TURNS = 1.0; // palette loops around the wire (1 ⇒ three broad bands)
+const CYCLE_DRIFT = 0.42; // colour travel speed (palette-units per unit twistT) — lively flow
+const CYCLE_CHROMA = 1.12; // chroma boost (kept vivid by the gamut map)
 
 // ── easing (for the charge + the glide; the morph itself is a spring) ─────────
 const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
@@ -99,6 +111,7 @@ export default function HeroTwistRing({
   pieces = 240,
   grayscale = false,
   paused = false,
+  colorCycle,
   className,
   style,
 }: {
@@ -110,6 +123,10 @@ export default function HeroTwistRing({
   pieces?: number;
   grayscale?: boolean;
   paused?: boolean;
+  /** Opt-in: paint the whole wire as a vivid OKLab loop through these brand
+   *  colours (full colour always), instead of the seed's single-charge arc.
+   *  Pass a STABLE array (e.g. the module PALETTE). undefined ⇒ default look. */
+  colorCycle?: readonly string[];
   className?: string;
   style?: React.CSSProperties;
 }) {
@@ -144,13 +161,18 @@ export default function HeroTwistRing({
   const segRef = useRef(segments);
   const pieceRef = useRef(pieces);
   const sizeRef = useRef(size);
+  // colour-cycle palette parsed to OKLab once (null ⇒ default seed-charge look).
+  const cycleLabRef = useRef<Lab[] | null>(
+    colorCycle && colorCycle.length ? colorCycle.map(hexToOklab) : null,
+  );
   useEffect(() => {
     baseColorsRef.current = baseColors;
     grayRef.current = grayscale;
     segRef.current = segments;
     pieceRef.current = pieces;
     sizeRef.current = size;
-  }, [baseColors, grayscale, segments, pieces, size]);
+    cycleLabRef.current = colorCycle && colorCycle.length ? colorCycle.map(hexToOklab) : null;
+  }, [baseColors, grayscale, segments, pieces, size, colorCycle]);
 
   // React to seed changes → start the appropriate spring / glide.
   useEffect(() => {
@@ -284,7 +306,33 @@ export default function HeroTwistRing({
           blendRef.current = 0;
         }
       }
-      const css = lab.map(oklabToCss);
+
+      // Per-vertex colour: either the vivid full-colour cycle (whole wire painted,
+      // alpha 1 everywhere) or the seed's lit charge over the dark base.
+      const cycleLab = cycleLabRef.current;
+      const cycleActive = !!cycleLab && !gray;
+      let css: string[];
+      if (cycleActive) {
+        const M = cycleLab!.length;
+        const drift = tw * CYCLE_DRIFT;
+        css = new Array<string>(N);
+        for (let i = 0; i < N; i++) {
+          // closed loop through the palette (wraps last→first), drifting with spin
+          const u = ((((i / N) * CYCLE_TURNS * M + drift) % M) + M) % M;
+          const seg = Math.floor(u);
+          const f = smoothstep(u - seg);
+          const c0 = cycleLab![seg];
+          const c1 = cycleLab![(seg + 1) % M];
+          css[i] = oklabToCss({
+            L: lerp(c0.L, c1.L, f),
+            a: lerp(c0.a, c1.a, f) * CYCLE_CHROMA,
+            b: lerp(c0.b, c1.b, f) * CYCLE_CHROMA,
+          });
+          alpha[i] = 1; // full colour always
+        }
+      } else {
+        css = lab.map(oklabToCss);
+      }
 
       // Paint.
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -294,15 +342,18 @@ export default function HeroTwistRing({
       ctx.lineWidth = STROKE * s;
 
       // 1) the whole wire in the dark base ramp (drawn ONCE, under the charge).
-      const baseGrad = ctx.createLinearGradient(GRAD_X1 * s, CY * s, GRAD_X2 * s, CY * s);
-      baseGrad.addColorStop(0, colors[0]);
-      baseGrad.addColorStop(1, colors[1]);
-      ctx.strokeStyle = baseGrad;
-      ctx.beginPath();
-      ctx.moveTo(px[0] * s, py[0] * s);
-      for (let i = 0; i < N; i++) appendSeg(px, py, i, N, s);
-      ctx.closePath();
-      ctx.stroke();
+      //    Skipped in colour-cycle mode — the cycle already paints the entire wire.
+      if (!cycleActive) {
+        const baseGrad = ctx.createLinearGradient(GRAD_X1 * s, CY * s, GRAD_X2 * s, CY * s);
+        baseGrad.addColorStop(0, colors[0]);
+        baseGrad.addColorStop(1, colors[1]);
+        ctx.strokeStyle = baseGrad;
+        ctx.beginPath();
+        ctx.moveTo(px[0] * s, py[0] * s);
+        for (let i = 0; i < N; i++) appendSeg(px, py, i, N, s);
+        ctx.closePath();
+        ctx.stroke();
+      }
 
       // 2) the charge strands, in arc order (later arcs paint over earlier ⇒ the
       //    same over/under depth as SVG). TRANSPARENT strands are skipped entirely

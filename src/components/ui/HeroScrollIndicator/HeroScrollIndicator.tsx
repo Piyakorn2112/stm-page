@@ -14,7 +14,22 @@ import styles from "./styles.module.css";
 
 const HIDE_AFTER = 60; // px scrolled before the cue fades out
 
-export default function HeroScrollIndicator({ className }: { className?: string }) {
+export default function HeroScrollIndicator({
+  className,
+  variant = "default",
+}: {
+  className?: string;
+  /**
+   * "default" — themed muted ink (var(--muted)); use over a solid, subtle surface
+   *   (the home + /build heroes).
+   * "blend" — for heroes WITHOUT a solid backing (e.g. /product, sat over the live
+   *   colour ring): paints with `mix-blend-mode: difference` over a neutral grey, which
+   *   is a cheap GPU per-pixel blend (no shadow, no JS) that keeps a CONSTANT contrast
+   *   against ANY backdrop — equal on white and on black (a grey of value g gives
+   *   contrast g against both), tuned to match the default's contrast on a white page.
+   */
+  variant?: "default" | "blend";
+}) {
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
@@ -26,7 +41,7 @@ export default function HeroScrollIndicator({ className }: { className?: string 
 
   return (
     <span
-      className={`${styles.indicator}${hidden ? ` ${styles.hidden}` : ""}${className ? ` ${className}` : ""}`}
+      className={`${styles.indicator}${variant === "blend" ? ` ${styles.blend}` : ""}${hidden ? ` ${styles.hidden}` : ""}${className ? ` ${className}` : ""}`}
       aria-hidden="true"
     >
       <span className={styles.label}>Scroll Down</span>

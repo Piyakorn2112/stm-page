@@ -8,7 +8,7 @@
  */
 
 import type { CSSProperties } from "react";
-import { Blend, Boxes, Check, Gem, Hand, Minus, Network, Palette, Target, Users } from "lucide-react";
+import { Blend, Boxes, Check, Gem, Hand, Minus, Network, Palette, PackageOpen, Users } from "lucide-react";
 import styles from "@/features/build/build.module.css";
 import AlignmentDiagram from "./AlignmentDiagram";
 import TeamField from "@/components/graphic/TeamField/TeamField";
@@ -27,7 +27,7 @@ const PRINCIPLES = [
     d: "Teams stay small and focused. Less coordination, more clarity, faster iteration.",
   },
   {
-    Icon: Target,
+    Icon: PackageOpen,
     t: "Outcome over role",
     d: "We don’t measure contribution by job title. We look at what was built, how well it works, and the thinking behind it.",
   },

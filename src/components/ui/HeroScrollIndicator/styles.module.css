@@ -28,6 +28,20 @@
   opacity: 0;
 }
 
+/* "blend" variant — for heroes with NO solid backing (e.g. /product, sat over the live
+   colour ring). `mix-blend-mode: difference` over a neutral grey keeps a CONSTANT contrast
+   on any backdrop: a grey of value g difference-blends to contrast g against BOTH white and
+   black (and inverts over colour), so it never washes out. g≈170 (#aaa) is tuned to match
+   the default variant's var(--muted)-on-white contrast. A cheap GPU per-pixel blend — no
+   shadow, no JS, and theme-independent (correct in light AND dark with no swap). */
+.blend {
+  mix-blend-mode: difference;
+  color: #aaaaaa;
+}
+.blend .line {
+  background: linear-gradient(to bottom, #aaaaaa, transparent);
+}
+
 .label {
   display: inline-block;
   opacity: 0.26;
