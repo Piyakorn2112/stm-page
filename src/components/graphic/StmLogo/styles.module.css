@@ -1,0 +1,22 @@
+/* StmLogo — wordmark + live ring lockup. The `STM text.svg` artwork is WHITE (built for
+   the dark hero), so invert it to black for light mode and leave it white on dark. The
+   ring handles its own light/dark via the `white` prop. */
+.logo {
+  position: relative;
+  display: block;
+}
+.wordmark {
+  position: absolute;
+  display: block;
+  filter: invert(1); /* white artwork → black on the light footer */
+}
+.ring {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto; /* keep hover-to-bloom even inside a non-interactive parent */
+}
+@media (prefers-color-scheme: dark) {
+  .wordmark {
+    filter: none; /* keep it white on the dark footer */
+  }
+}

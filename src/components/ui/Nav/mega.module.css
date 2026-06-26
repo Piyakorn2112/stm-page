@@ -1,0 +1,161 @@
+/* Nav product mega-menu — SHARED across both nav looks (token-based, so it's identical on
+   every page; the per-page module still owns the bar/links/CTA). Two presentations:
+   • DESKTOP: hovering "Product" drops a sheet below the bar (max-height expand, same easing
+     as the mobile drawer) — Apple-style big bold product names, no icons.
+   • MOBILE: the slider stacks the two panels in the same box; tapping "Product" crossfades
+     to the products panel with only a slight (16px) push — fade leads, travel is minimal. */
+
+/* ---- the slider that carries the main items + the mobile products panel ---------------- */
+/* Desktop: transparent — the main items flow straight into the centred nav row. */
+.slider {
+  display: contents;
+}
+.panelMain {
+  display: contents;
+}
+.panelProducts {
+  display: none;
+}
+
+/* ---- DESKTOP mega sheet — IN-FLOW below the bar row, so the nav element itself grows and its
+   own (solid, on-open) background + blur expand with it. No bg here: it inherits the nav. ------ */
+.mega {
+  overflow: hidden;
+  height: 0; /* the exact open height is set by JS (megaInner's measured height) so the FULL
+                --ease-standard curve maps onto the visible expand — same as the mobile slider
+                (a max-height overshoot would cut the eased tail and read as linear). */
+  pointer-events: none;
+  transition: height 380ms var(--ease-standard);
+}
+.mega[data-open="1"] {
+  pointer-events: auto;
+}
+.megaInner {
+  /* align to the same column/gutter as the bar's logo + links */
+  padding: 22px max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter))) 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+/* VERTICAL, left-aligned list of big bold product names — no icons (Inter, inherited) */
+.megaList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.megaItem {
+  padding: 5px 0;
+  font-size: clamp(1.3rem, 1.7vw, 1.65rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--fg); /* SOLID product names */
+  transition: opacity 160ms var(--ease-standard);
+}
+.megaItem:hover {
+  opacity: 0.62; /* subtle affordance only — the names don't change colour */
+}
+.viewAll {
+  margin-top: 14px;
+  font-size: 0.92rem;
+  color: var(--faint);
+  transition: color 160ms var(--ease-standard);
+}
+.viewAll:hover {
+  color: var(--fg);
+}
+
+/* ---- MOBILE: the two-panel crossfade ---------------------------------------------------- */
+@media (max-width: 720px) {
+  .mega {
+    display: none; /* mobile uses the in-drawer slider instead */
+  }
+  .slider {
+    display: flex;
+    position: relative; /* anchors the absolutely-stacked products panel */
+    align-items: flex-start; /* panels size to THEIR OWN content, not a stretched/shared one */
+    /* no overflow:hidden here — the inactive panel already hides via opacity + pointer-events,
+       so clipping isn't needed to hide it, and would otherwise cut the slight push below right
+       at its own edge. .navLinks (the drawer) still clips vertically during open/close. */
+    /* this height value only actually changes when the active panel swaps (the crossfade
+       above) — opening/closing the drawer itself doesn't touch it (.navLinks owns that, at
+       380ms, untouched) — so syncing it to the panel fade's speed only affects the slide. */
+    transition: height 200ms var(--ease-standard);
+  }
+  .panelMain,
+  .panelProducts {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 2px;
+    /* fade leads the transition; the push is a small nudge, not a slide across the screen */
+    transition: opacity 200ms var(--ease-standard), transform 200ms var(--ease-standard);
+  }
+  /* stack both panels in the SAME box (instead of side by side) so the crossfade only needs
+     a slight offset, regardless of how far a full-width slide would otherwise have to travel */
+  .panelProducts {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0; /* resting/inactive state — overridden below when data-products="1" */
+    transform: translateX(16px);
+    pointer-events: none;
+  }
+  .slider[data-products="1"] .panelMain {
+    opacity: 0;
+    transform: translateX(-16px);
+    pointer-events: none;
+  }
+  .slider[data-products="1"] .panelProducts {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    padding: 10px 2px;
+    margin: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.9rem;
+  }
+  .back:hover {
+    color: var(--fg);
+  }
+  /* product rows — same big bold SOLID treatment as the desktop sheet, plus a chevron */
+  .mItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 5px 2px;
+    font-size: clamp(1.3rem, 6vw, 1.6rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+    transition: opacity 160ms var(--ease-standard);
+  }
+  .mItem:hover {
+    opacity: 0.62; /* lighten, like the desktop names */
+  }
+  .mItemChevron {
+    color: var(--faint);
+    flex: none;
+  }
+  /* secondary "View all products" link below the list — muted, like the desktop sheet */
+  .mViewAll {
+    margin-top: 12px;
+    padding: 2px;
+    font-size: 0.92rem;
+    color: var(--faint);
+    transition: color 160ms var(--ease-standard);
+  }
+  .mViewAll:hover {
+    color: var(--fg);
+  }
+}

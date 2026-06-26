@@ -1,0 +1,554 @@
+/* ════════════════════════════════════════════════════════════════════════
+   /build — "Build With Us" careers page. Reuses the site tokens (globals.css);
+   the hero fills the viewport (the 3D badge), the nav hides over it (like home),
+   and the hero blends smoothly down into the normal page below.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Nav — ALWAYS visible on /build. Over the hero it wears the hero's off-white so it
+   reads as part of the scene; once scrolled past the hero it becomes the default
+   translucent bar over the white content. min-height matches the homepage nav so the
+   two bars are the same thickness. */
+/* COLUMN: bar row (.navRow) + the in-flow expandable region (mega/drawer) below it, so the
+   nav grows as one surface (its bg + blur expand with it). */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  /* Over the hero: a Material-style FROSTED bar — the hero's shadowed off-white at low
+     opacity, with a faint border + dimmed brand/links. Scrolled → it firms up into the solid bar. */
+  background: color-mix(in srgb, #e7e3dc 46%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--fg) 5%, transparent);
+  transition: background 340ms ease, border-color 340ms ease;
+}
+@media (prefers-color-scheme: dark) {
+  .nav {
+    background: color-mix(in srgb, #24262d 46%, transparent);
+  }
+}
+/* the bar row — positioning context for the centred links + CTA; matches the home bar height */
+.navRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 13px max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+  min-height: 57px;
+}
+.navScrolled {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border-bottom-color: var(--border);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg);
+  transition: opacity 200ms var(--ease-standard);
+}
+.brand:hover,
+.brand:focus-visible {
+  opacity: 0.62; /* a home BUTTON — same subtle lighten as the rest of the nav */
+}
+.brandMark {
+  display: block;
+  width: 128px;
+  aspect-ratio: 806 / 127;
+  background: url("/STM%20logo%20long%20text.svg") center / contain no-repeat;
+  opacity: 0.74; /* dimmed over the hero; firms up when scrolled */
+  transition: opacity 340ms ease;
+}
+.navScrolled .brandMark {
+  opacity: 1;
+}
+@media (prefers-color-scheme: dark) {
+  .brandMark {
+    filter: invert(1); /* bright white wordmark; the 0.74 opacity gives it a slight tint */
+  }
+}
+.headerLink {
+  font-size: 0.93rem;
+  color: color-mix(in srgb, var(--muted) 58%, transparent); /* faint over the hero */
+  transition: color 340ms ease;
+}
+.navScrolled .headerLink {
+  color: var(--muted);
+}
+.headerLink:hover {
+  color: var(--fg);
+}
+/* full primary navigation on /build (mirrors the homepage nav, links point back home) */
+.navLinks {
+  display: flex;
+  align-items: center;
+  /* tight spacing between the centred links */
+  gap: clamp(20px, 2vw, 28px);
+  font-size: 0.93rem;
+}
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  color: color-mix(in srgb, var(--muted) 58%, transparent); /* faint over the hero */
+  transition: color 340ms ease;
+}
+.navScrolled .navLink {
+  color: var(--muted);
+}
+.navLink:hover,
+.navLinkActive,
+.navScrolled .navLinkActive {
+  color: var(--fg); /* current page ("Work") stays emphasised */
+}
+/* Desktop: the icon is collapsed (zero width) at rest and GROWS in on hover/focus, so the
+   label shifts right to give way to it. Same easing as the mobile menu expand (no overshoot). */
+.navIcon {
+  display: inline-flex;
+  align-items: center;
+  width: 0;
+  margin-right: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: scale(0.82); /* a gentle scale-up as it reveals */
+  transform-origin: left center;
+  pointer-events: none;
+  transition: width 260ms var(--ease-standard), margin-right 260ms var(--ease-standard),
+    opacity 220ms var(--ease-standard), transform 260ms var(--ease-standard);
+}
+.navLink:hover .navIcon,
+.navLink:focus-visible .navIcon {
+  width: 16px; /* NAV_ICON_SIZE — the label shifts right by icon + margin */
+  margin-right: 7px;
+  opacity: 1;
+  transform: scale(1);
+}
+/* CTA — the primary action as a tight, fully-rounded pill (solid ink ⇒ inverts in dark). */
+.navCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px; /* short pill; under the 57px bar min-height so the bar height + the other
+                   items' alignment are unaffected */
+  padding: 0 13px 0 9px; /* tighter left so the asterisk sits concentric in the rounded cap */
+  border-radius: var(--radius-pill);
+  background: var(--fg); /* SOLID by default */
+  color: var(--bg);
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition: opacity 200ms var(--ease-standard);
+}
+.navCta:hover {
+  opacity: 0.62; /* lighten on hover (like the product names) */
+}
+
+/* Desktop only: logo stays left (in flow), the text links are CENTRED in the bar, and the
+   CTA is pinned RIGHT at the content gutter. navLinks is absolute (out of flow) so the taller
+   CTA can't change the bar height; mobile keeps its drawer layout untouched. */
+@media (min-width: 721px) {
+  .navLinks {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    justify-content: center; /* centre the text links across the bar */
+    gap: 0; /* spacing now lives in .navLink's own padding, so hit boxes touch */
+    /* this box spans the FULL bar (so centring is independent of the brand's width), but
+       that means its edges sit over the brand/logo in paint order (it's positioned, the
+       brand isn't) and silently swallow clicks meant for it. Make the empty box itself
+       click-through; only its real children stay interactive. */
+    pointer-events: none;
+  }
+  .navLinks a {
+    pointer-events: auto;
+  }
+  /* the same gap, moved INTO each link's hit box — contiguous clickable areas, so the
+     mouse never drops hover state while dragging across Home/Product/Work. */
+  .navLink {
+    padding-inline: clamp(10px, 1vw, 14px);
+  }
+  /* CTA out of the centred flow, pinned to the right at the same gutter as the logo */
+  .navLinks a.navCta {
+    position: absolute;
+    right: max(var(--gutter), calc((100% - var(--maxw)) / 2 + var(--gutter)));
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+/* desktop: transparent wrapper so the brand sits directly in the nav's flex row */
+.navTop {
+  display: contents;
+}
+/* mobile hamburger — hidden on desktop */
+.navBurger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin: -6px;
+  padding: 6px;
+  color: var(--fg);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+/* full-screen darken + blur scrim behind the expanded menu (mobile drawer AND desktop mega);
+   sits just under the nav (z 39 vs 40). blur via Tailwind `backdrop-blur-[5px]` when shown. */
+.navScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: color-mix(in srgb, #000 28%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 360ms var(--ease-standard);
+}
+.navScrimShown {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Hero — full viewport; the badge canvas fills it, the input sits at the bottom. */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.stage {
+  position: absolute;
+  inset: 0;
+}
+/* Smooth blend from the lit hero down into the normal page background. */
+.heroFade {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 30%;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--bg) 55%, transparent) 55%, var(--bg) 100%);
+}
+
+/* Nickname input — overlaid near the bottom of the hero; shapes the badge. */
+.heroForm {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(34px, 7vh, 84px);
+  transform: translateX(-50%);
+  z-index: 2;
+  width: min(460px, calc(100% - 2 * var(--gutter)));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+/* The name is typed directly ON the badge (the card's name field is the visible control).
+   This input is the real text target — visually hidden but focusable, so it drives typing,
+   the mobile keyboard, IME and paste. pointer-events:none ⇒ it never intercepts the canvas. */
+.nameField {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  background: transparent;
+  color: transparent;
+  pointer-events: none;
+}
+.nameLine {
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--muted);
+  text-align: center;
+  /* fits on one line within the form on desktop; wraps only if truly too narrow */
+}
+.nameHint {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  color: var(--faint);
+  text-align: center;
+}
+
+/* Copy below the fold, centred. */
+.intro {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  width: 100%;
+  padding: clamp(48px, 9vh, 120px) var(--gutter) clamp(72px, 12vh, 140px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.intro .lede {
+  margin-inline: auto;
+}
+
+/* ── How We Work content ──────────────────────────────────────────────── */
+/* Centred statement blocks (opening + closing). */
+.workCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 820px;
+  margin-inline: auto;
+}
+
+/* Operating principles — each a containing-shape card (a raised --surface panel,
+   matching the home page's "form" pillar panel idiom) instead of a bare top rule. */
+.principles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: clamp(16px, 2.2vw, 24px);
+  margin-top: clamp(40px, 5vw, 64px);
+}
+@media (min-width: 881px) {
+  /* a fixed 3-up grid reads as a clean 3+2 for these 5 cards, instead of auto-fit's
+     4+1 (a single orphaned card with a wide empty gap beside it). */
+  .principles {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.principle {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: clamp(24px, 2.8vw, 30px) clamp(20px, 2.4vw, 26px);
+}
+.principleIconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  margin-bottom: 16px;
+}
+.principleIcon {
+  color: var(--accent);
+}
+.principleTitle {
+  font-size: 1.16rem;
+  font-weight: 640;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+.principleDesc {
+  margin-top: 8px;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* Aligned, not isolated — diagram beside the copy. */
+.alignSplit {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: clamp(28px, 4.5vw, 64px);
+  align-items: center;
+  /* break out wider than the 1180px text container so the gathering canvas gets real
+     room (clipped only by the full-width section, so no horizontal scroll) */
+  width: min(1340px, 95vw);
+  margin-inline: calc((100% - min(1340px, 95vw)) / 2);
+}
+.alignVisual {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+.teamField {
+  position: absolute;
+  inset: 0;
+}
+.alignText {
+  align-self: center;
+}
+/* the small structural diagram now lives inside the copy, after the layer list */
+.alignDiagramInline {
+  display: block;
+  width: 100%;
+  max-width: 380px;
+  margin: 8px 0 22px;
+}
+.alignList {
+  list-style: none;
+  margin: 22px 0;
+  display: grid;
+  gap: 15px;
+}
+.alignItem {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.alignIcon {
+  color: var(--accent);
+  flex: none;
+  margin-top: 1px;
+}
+.alignBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.alignItemT {
+  font-weight: 600;
+  font-size: 1.02rem;
+  color: var(--fg);
+}
+.alignItemD {
+  font-size: 0.96rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* Who fits / who doesn't — attract on the left, filter on the right. */
+.fitCols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(28px, 5vw, 64px);
+  margin-top: clamp(40px, 5vw, 60px);
+}
+.fitHead {
+  font-size: 1.1rem;
+  font-weight: 620;
+  letter-spacing: -0.012em;
+  color: var(--fg);
+  margin-bottom: 18px;
+}
+.fitColMuted .fitHead {
+  color: var(--muted);
+}
+.fitList {
+  list-style: none;
+  display: grid;
+  gap: 13px;
+}
+.fitItem,
+.fitItemMuted {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.fitIcon {
+  flex: none;
+  margin-top: 2px;
+}
+.fitItem .fitIcon {
+  color: var(--accent);
+}
+.fitItemMuted .fitIcon {
+  color: var(--faint);
+}
+
+@media (max-width: 880px) {
+  .alignSplit {
+    grid-template-columns: 1fr;
+    gap: clamp(28px, 6vw, 44px);
+    /* reset the desktop break-out: keep the mobile canvas at its normal size */
+    width: auto;
+    margin-inline: 0;
+  }
+  .alignVisual {
+    order: -1;
+    max-width: 440px;
+    margin-inline: auto;
+  }
+  .fitCols {
+    grid-template-columns: 1fr;
+  }
+  /* match the site-wide mobile rule: title centred (handled by site .heading/.eyebrow),
+     paragraphs left-aligned at the gutter — so these statement blocks stop centring their
+     copy and share the same side spacing as every other section */
+  .intro,
+  .workCenter {
+    align-items: stretch;
+  }
+  .intro .lede {
+    margin-inline: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  /* the bar row grows in height to reveal the links drawer (Apple-style), no popup */
+  .navRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0; /* the base 24px gap would otherwise pad the collapsed bar by a whole row-gap */
+    min-height: 0;
+  }
+  .navTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 31px;
+  }
+  .navBurger {
+    display: inline-flex;
+  }
+  .navLinks {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    /* bleed the clip box 16px each side (cancelled by the matching padding) so the mega
+       slider's product-panel push has room to move without its edge being clipped */
+    margin-inline: -16px;
+    padding-inline: 16px;
+    transition: max-height 380ms var(--ease-standard), opacity 240ms ease,
+      padding 380ms var(--ease-standard);
+  }
+  .navOpen .navLinks {
+    max-height: 70vh;
+    opacity: 1;
+    padding-top: 14px;
+    padding-bottom: 8px;
+  }
+  .navLink {
+    padding: 12px 2px;
+    margin-left: 0; /* drop the desktop icon-zone reservation */
+    font-size: 1.06rem;
+    gap: 13px;
+  }
+  /* CTA identical to desktop (solid, asterisk, concentric padding); just don't let the
+     stretch column widen it, and give it a little breathing room in the drawer */
+  .navCta {
+    align-self: flex-start;
+    margin: 12px 0 2px;
+  }
+  /* mobile drawer keeps icons inline + always visible (full width); the navLink gap
+     handles the icon→label spacing, so no margin/transform on the icon itself */
+  .navIcon,
+  .navLink:hover .navIcon,
+  .navLink:focus-visible .navIcon {
+    width: auto;
+    margin-right: 0;
+    opacity: 1;
+    overflow: visible;
+    transform: none;
+    transition: none;
+  }
+}

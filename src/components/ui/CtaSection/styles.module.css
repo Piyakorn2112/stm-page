@@ -1,0 +1,52 @@
+/* CtaSection — centered column layout for the solid-pill CTA section. The section itself
+   uses the global .section/.sectionAlt padding; this module only handles centering and the
+   button. */
+
+.ctaSection {
+  /* intentionally empty — global .section/.sectionAlt handles padding + bg */
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* horizontally centres inline/flex children (eyebrow, button) */
+  text-align: center;
+}
+
+/* Force centre-align on the block-level heading (global .heading has no explicit align).
+   Slightly wider max-width than the default 17ch — CTA copy needs a little more room. */
+.ctaTitle {
+  text-align: center;
+  margin-inline: auto;
+  max-width: 20ch;
+}
+
+/* Centre the lede and tighten the measure — CTA bodies read better shorter. */
+.ctaBody {
+  text-align: center;
+  max-width: 44ch;
+  margin-inline: auto;
+}
+
+/* Page-scale pill: same visual identity as the nav CTA (Asterisk icon, solid --fg fill,
+   --bg text, --radius-pill, same gap/weight) but taller and wider to suit a section CTA.
+   --fg/--bg auto-invert in dark mode via the global token swap. */
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 46px;
+  padding: 0 22px 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  margin-top: clamp(28px, 3.6vw, 44px);
+  transition: opacity 200ms var(--ease-standard);
+}
+.ctaBtn:hover {
+  opacity: 0.7;
+}

@@ -1,0 +1,288 @@
+/* /product — hub page. Hero follows the shared hero convention: full-viewport section
+   (full width, 100dvh, clipped) with the scroll cue pinned bottom-centre. Below it,
+   ProductSections adds one full detail section per product (see that file's doc
+   comment) using the global section/container/eyebrow/heading/body primitives. */
+.page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden; /* clips the ring that bleeds off the edges */
+}
+
+/* the centroid point — the viewport centre */
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  z-index: 1;
+}
+
+/* ── ring (truly centred on the centroid; blooms up on enter) ─────────────────── */
+.ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  /* translate(-50%,-50%) centres the canvas on the stage point regardless of its size
+     ⇒ identical centring on desktop AND mobile (no size-dependent offset).
+     Kept on the standalone `translate` property (static, never transitions) and
+     `scale` on its OWN property (the only thing that animates) rather than one
+     combined `transform: translate(...) scale(...)`. Safari/WebKit can briefly
+     desync a percentage-resolved translate from its box size when that box
+     resizes (the canvas snaps from its default native size to `size`px right
+     after mount) at the same moment a bundled transform starts transitioning —
+     the ring flashes "untranslated" (top-left-anchored ⇒ appears bottom-right)
+     for a frame before snapping back. Splitting the properties removes the
+     shared interpolation path; only `scale` is animated and it has no
+     box-size/percentage dependency to desync. (Chrome doesn't hit this.) */
+  translate: -50% -50%;
+  scale: 0.32;
+  transition: scale 900ms var(--ease-overshoot);
+  will-change: scale;
+}
+.entered .ring {
+  scale: 1.45;
+}
+
+/* Two concentric ring layers inside the (shared) bloom wrapper. The front spins gently
+   one way; the back is scaled up + faded down + spins the OPPOSITE way ⇒ a slow,
+   counter-rotating mandala. The spin lives on these inner elements so it never fights
+   the `.ring` bloom transform. transform-origin is the canvas centre (default). */
+.ringFxFront {
+  display: block;
+  animation: ringSpinFront 34s linear infinite;
+}
+.ringFxBack {
+  display: block;
+  opacity: 0.4;
+  filter: saturate(1.3);
+  animation: ringSpinBack 128s linear infinite;
+}
+@keyframes ringSpinFront {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ringSpinBack {
+  from {
+    transform: rotate(0deg) scale(1.35);
+  }
+  to {
+    transform: rotate(-360deg) scale(1.35);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ringFxFront {
+    animation: none;
+  }
+  .ringFxBack {
+    animation: none;
+    transform: scale(1.35); /* keep the bigger faint backdrop, just no spin */
+  }
+}
+
+/* ── hero headline ────────────────────────────────────────────────────────────── */
+.heroTitle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  /* larger than the global .heading — this is the hero focal text (bigger floor for
+     mobile, bigger cap for desktop); still balanced multi-line breaks */
+  font-size: clamp(2.7rem, 7vw, 4.8rem);
+  font-weight: 680;
+  line-height: 1.04;
+  letter-spacing: -0.032em;
+  color: var(--fg);
+  text-align: center;
+  text-wrap: balance;
+  max-width: 22ch;
+  /* enter: fade + a small lift, just after the ring's bloom */
+  opacity: 0;
+  transform: translate(-50%, calc(-50% + 18px));
+  transition:
+    opacity 720ms var(--ease-standard) 240ms,
+    transform 720ms var(--ease-standard) 240ms;
+}
+.entered .heroTitle {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+.tagWord {
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring,
+  .heroTitle {
+    transition: none;
+  }
+}
+
+/* ── per-product sections (ProductSections) ──────────────────────────────────────
+   Each row carries the product's raw brand hex as `--p-raw`; `--accent` is DERIVED
+   from it via the same relative-oklch lightness/chroma shift as the home page's
+   product rows (see home.module.css's `.productText`) — light mode darkens the raw
+   hex, dark mode lightens + slightly desaturates it, by the same perceived amount
+   regardless of how light/saturated the hex starts out. Only the global `.eyebrow`
+   reads `--accent` here (color: var(--accent) is already its global rule) — the
+   product's colour otherwise lives ONLY in its logo's own intrinsic brand mark, never
+   as a section background, so 4 different hues read as one system, not a scrapbook. */
+.productSection {
+  --accent: oklch(from var(--p-raw) calc(l - 0.12) calc(c * 0.88) h);
+}
+@media (prefers-color-scheme: dark) {
+  .productSection {
+    --accent: oklch(from var(--p-raw) calc(l + 0.08) calc(c * 0.88) h);
+  }
+}
+
+/* Apple-product-page rhythm: gaps WITHIN a group are kept tight; the gap BETWEEN the
+   intro group and the capability grid is large (and marked by a single hairline). That
+   contrast — not raw whitespace — is what reads as "premium". Tracking tightens as type
+   grows; prose measure is capped (~58ch) even though the container is wide; the brand
+   accent appears only on the eyebrow. One fixed skeleton across all four products. */
+
+/* tighten the global eyebrow's default gap so eyebrow → logo reads as one unit */
+.productSection :global(.eyebrow) {
+  margin-bottom: clamp(12px, 1.4vw, 16px);
+}
+
+/* the tinted ("alt") sections get extra vertical padding so the shaded band reads as a
+   deliberate panel with room to breathe — the borderless plain sections don't show
+   their edges, so they need less. */
+.productSection:global(.sectionAlt) {
+  padding-block: clamp(116px, 17vh, 208px);
+}
+
+/* ── intro group (logo + statement) ───────────────────────────────────────────── */
+/* The logo IS this section's heading (wrapped in an <h2>; its accessible name comes
+   from DualToneLogo's own aria-label). Sized for EQUAL OPTICAL WEIGHT: the box takes
+   each logo's exact viewBox aspect (`--logo-ar`) and a width of √aspect (`--logo-k`)
+   times a shared responsive scale, so every lockup ends with the same bounding-box
+   AREA (w×h) regardless of how wide or tall its own shape is — a compact mark and a
+   long wordmark read at the same size, instead of width-dominant ones looming. Because
+   the box aspect matches the art, the inlined svg fills it exactly and sits flush LEFT
+   (margin 0 + the svg's injected preserveAspectRatio="xMinYMid"), so every logo is
+   left-aligned. Capped to 100% so a very wide lockup can't overflow a narrow screen. */
+.productLogo {
+  /* area === (--logo-scale)² for EVERY logo (width √ar·s × height s/√ar), so one scale
+     governs all four. Min kept low enough that the widest wordmark still fits a phone's
+     content width (≈350px ÷ widest √ar) WITHOUT hitting the 100% cap — past that cap the
+     equal-area relationship would break for the widest logos. */
+  --logo-scale: clamp(106px, 15vw, 196px);
+  margin: 0;
+  width: min(calc(var(--logo-k) * var(--logo-scale)), 100%);
+  aspect-ratio: var(--logo-ar);
+}
+.productLogoSvg {
+  width: 100%;
+  height: 100%;
+}
+
+/* the one-line statement — the section's "intro" type: sized up to ~2× body, tight
+   tracking + tight leading so the big type reads as a single confident object. */
+.productTagline {
+  margin-top: clamp(28px, 3.4vw, 40px);
+  font-size: clamp(1.55rem, 2.6vw, 2.1rem);
+  font-weight: 600;
+  line-height: 1.14;
+  letter-spacing: -0.024em;
+  color: var(--fg);
+  max-width: 22ch;
+  text-wrap: balance;
+}
+
+/* `.productDetail` wraps the body prose and the capability grid. By default (mobile +
+   narrow desktop) they STACK; on a WIDE desktop they sit SIDE BY SIDE in two columns
+   (see the min-width:1080 block). No divider line — spacing (and, when wide, the column
+   gap) separates the prose from the details. */
+.productDetail {
+  margin-top: clamp(18px, 2vw, 24px);
+}
+.productBody {
+  max-width: 58ch; /* cap the read length even in the wide structural container */
+}
+.productBody p {
+  font-size: 1.0625rem; /* ~17px — Apple's desktop body step */
+  line-height: 1.6;
+  letter-spacing: -0.004em;
+  color: var(--muted);
+}
+.productBody p + p {
+  margin-top: 1.05em;
+}
+
+/* a 2×2 grid of feature cards (bold title + one supporting line) — a tidy grid reads as
+   design where a dashed bullet list reads as a list. */
+.productGrid {
+  margin: 0;
+  margin-top: clamp(40px, 5vw, 60px); /* stacked: separates from the prose above (no line) */
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(26px, 3vw, 40px) clamp(32px, 5vw, 80px);
+  max-width: 880px;
+}
+.cardTitle {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.014em;
+  color: var(--fg);
+}
+.cardDetail {
+  margin-top: 7px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 34ch;
+}
+
+.productStatus {
+  margin-top: clamp(40px, 5vw, 56px);
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* outbound "Visit <product>" link wrapper — same top gap as the status it replaces */
+.productCta {
+  margin-top: clamp(40px, 5vw, 56px);
+}
+
+/* mobile: keep the current stacked layout; the feature grid collapses to one column */
+@media (max-width: 880px) {
+  .productGrid {
+    grid-template-columns: 1fr;
+    gap: clamp(22px, 6vw, 30px);
+  }
+}
+
+/* wide desktop: the prose and the capability grid sit SIDE BY SIDE (two columns) */
+@media (min-width: 1080px) {
+  .productDetail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(48px, 6vw, 104px);
+    align-items: start;
+  }
+  .productGrid {
+    margin-top: 0; /* aligns with the top of the prose column instead of sitting below */
+    max-width: none; /* fill its own column */
+  }
+}

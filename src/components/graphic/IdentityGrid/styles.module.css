@@ -1,0 +1,37 @@
+/* IdentityGrid — the employee ring grid (8 columns, staggered scale-in reveal). The
+   section layout around it (.idSplit/.idGridWrap) lives in the home feature. */
+.idGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: clamp(10px, 1.6vw, 20px);
+}
+.idCell {
+  aspect-ratio: 176 / 171;
+  opacity: 0;
+  transform: scale(0.66);
+}
+.idGridIn .idCell {
+  opacity: 1;
+  transform: none;
+  transition: opacity 520ms ease var(--d, 0ms),
+    transform 620ms var(--ease-overshoot) var(--d, 0ms);
+}
+@media (max-width: 880px) {
+  /* keep all 8 columns (smaller rings) and a compact width, centred above the text */
+  .idGrid {
+    grid-template-columns: repeat(8, 1fr);
+    max-width: 380px;
+    margin-inline: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* identity grid: appear without the stagger */
+  .idCell {
+    opacity: 1;
+    transform: none;
+  }
+  .idGridIn .idCell {
+    transition: none;
+  }
+}

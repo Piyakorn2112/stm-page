@@ -19,9 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@stm-ring": ["./lib/stm-ring/src/index.ts"],
-      "@stm-ring/*": ["./lib/stm-ring/src/*"]
+      "@/*": ["./src/*"],
+      "@stm-ring": ["./src/lib/stm-ring/src/index.ts"],
+      "@stm-ring/*": ["./src/lib/stm-ring/src/*"]
     }
   },
   "include": [

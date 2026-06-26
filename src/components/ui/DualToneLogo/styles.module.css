@@ -1,0 +1,11 @@
+/* Sizing is the caller's job (width/height via a passed className); this just makes the
+   inlined SVG fill that box, matching its own width="100%" height="100%" source attrs. */
+.logo {
+  display: block;
+  color: var(--fg);
+}
+.logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
