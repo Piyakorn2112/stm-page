@@ -1,10 +1,7 @@
-/* /product — landing hero. Shared hero convention: full-viewport section (full width,
-   100dvh, clipped) with the scroll cue pinned bottom-centre.
-
-   The brand ring is centred on `.stage` (a point near the TOP). The product logos ride a
-   circular ARC whose centre (`--arc-cy`) is BELOW the content — so the logos occupy the
-   TOP of that dome and RISE UP from the bottom as they cycle, peaking at the apex. They
-   stay upright (counter-rotation) and fade in/out at the dome's lower edges. */
+/* /product — hub page. Hero follows the shared hero convention: full-viewport section
+   (full width, 100dvh, clipped) with the scroll cue pinned bottom-centre. Below it,
+   ProductSections adds one full detail section per product (see that file's doc
+   comment) using the global section/container/eyebrow/heading/body primitives. */
 .page {
   position: relative;
   min-height: 100vh;
@@ -19,19 +16,8 @@
   width: 100%;
   height: 100vh;
   height: 100dvh;
-  overflow: hidden; /* clips the ring/arc that bleed off the edges */
-  /* geometry: the colour ring is centred on `.stage` (the viewport centre, size-
-     independent so it's truly centred on every screen). The logo-arc circle is centred
-     FAR below at (50%, --arc-cy), so the logos ride the TOP of a big, nearly-HORIZONTAL
-     dome whose apex is at --apex. A large --arc-r flattens the arc; --arc-a the span. */
-  --arc-r: clamp(620px, 96vh, 1180px);
-  --apex: 80vh; /* y of the arc apex — the featured logo */
-  --arc-cy: calc(var(--apex) + var(--arc-r));
-  --arc-a: 60deg;
-  --cycle: 15s; /* time for one logo to sweep the full arc */
+  overflow: hidden; /* clips the ring that bleeds off the edges */
 }
-/* NOTE: the arc geometry is the SAME on every screen — on a narrow phone the arc simply
-   gets CROPPED by the left/right edges (logos keep their size); we do not shrink it. */
 
 /* the centroid point — the viewport centre */
 .stage {
@@ -49,13 +35,24 @@
   left: 0;
   top: 0;
   /* translate(-50%,-50%) centres the canvas on the stage point regardless of its size
-     ⇒ identical centring on desktop AND mobile (no size-dependent offset) */
-  transform: translate(-50%, -50%) scale(0.32);
-  transition: transform 900ms var(--ease-overshoot);
-  will-change: transform;
+     ⇒ identical centring on desktop AND mobile (no size-dependent offset).
+     Kept on the standalone `translate` property (static, never transitions) and
+     `scale` on its OWN property (the only thing that animates) rather than one
+     combined `transform: translate(...) scale(...)`. Safari/WebKit can briefly
+     desync a percentage-resolved translate from its box size when that box
+     resizes (the canvas snaps from its default native size to `size`px right
+     after mount) at the same moment a bundled transform starts transitioning —
+     the ring flashes "untranslated" (top-left-anchored ⇒ appears bottom-right)
+     for a frame before snapping back. Splitting the properties removes the
+     shared interpolation path; only `scale` is animated and it has no
+     box-size/percentage dependency to desync. (Chrome doesn't hit this.) */
+  translate: -50% -50%;
+  scale: 0.32;
+  transition: scale 900ms var(--ease-overshoot);
+  will-change: scale;
 }
 .entered .ring {
-  transform: translate(-50%, -50%) scale(1.45);
+  scale: 1.45;
 }
 
 /* Two concentric ring layers inside the (shared) bloom wrapper. The front spins gently
@@ -95,99 +92,7 @@
   }
 }
 
-/* ── logo arc (orbits a centroid BELOW the content ⇒ a dome) ─────────────────── */
-.arc {
-  position: absolute;
-  left: 50%;
-  top: var(--arc-cy);
-  width: 0;
-  height: 0;
-  z-index: 2; /* above the ring (its .stage is z-index 1), below the headline (z-index 3) */
-  opacity: 0;
-  transition: opacity 820ms var(--ease-standard) 460ms; /* fades in last */
-}
-.entered .arc {
-  opacity: 1;
-}
-
-/* each logo hangs ABOVE the centroid at radius --arc-r (translate up ⇒ top of the dome);
-   static spread by --i is the reduced-motion / no-animation fallback (cycle overrides). */
-.logoOrbit {
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform-origin: 0 0;
-  transform: rotate(calc(var(--arc-a) * (0.6667 * var(--i) - 1)))
-    translate(0, calc(var(--arc-r) * -1))
-    rotate(calc(var(--arc-a) * (1 - 0.6667 * var(--i))));
-}
-.logo {
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: block;
-  /* sized off viewport HEIGHT (not width) so the logos stay big on narrow phones —
-     the arc just crops instead of shrinking them */
-  width: clamp(250px, 38vh, 380px);
-  height: clamp(64px, 9.5vh, 96px);
-  transform: translate(-50%, -50%);
-  /* monochrome SVG masked with the theme ink ⇒ correct in light AND dark mode */
-  background-color: var(--fg);
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-size: contain;
-  mask-size: contain;
-}
-/* a little bigger on desktop (width-driven there, so it can grow past the vh cap) */
-@media (min-width: 721px) {
-  .logo {
-    width: clamp(340px, 26vw, 480px);
-    height: clamp(86px, 6.6vw, 122px);
-  }
-}
-
-/* The cycle: each logo sweeps the arc from one edge to the other (constant angular
-   speed) while fading in at the entering edge and out at the leaving edge, so the
-   wrap is invisible. Four logos, quarter-cycle apart ⇒ a continuous stream. */
-@media (prefers-reduced-motion: no-preference) {
-  .logoOrbit {
-    animation: logoOrbit var(--cycle) linear infinite;
-    animation-delay: calc(var(--i) * var(--cycle) / -4);
-  }
-  .logo {
-    animation: logoFade var(--cycle) ease-in-out infinite;
-    animation-delay: calc(var(--i) * var(--cycle) / -4);
-  }
-}
-@keyframes logoOrbit {
-  0% {
-    transform: rotate(calc(var(--arc-a) * -1)) translate(0, calc(var(--arc-r) * -1)) rotate(var(--arc-a));
-  }
-  100% {
-    transform: rotate(var(--arc-a)) translate(0, calc(var(--arc-r) * -1)) rotate(calc(var(--arc-a) * -1));
-  }
-}
-/* Peaked, not plateaued: only the logo at the dome's apex is full size + opacity; its
-   neighbours shrink and fade as they ride down toward the edges, so they read as
-   receding along the arc (depth) instead of colliding with the featured one. */
-@keyframes logoFade {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.34);
-  }
-  50% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.34);
-  }
-}
-
-/* ── headline (between the ring and the rising arc) ──────────────────────────── */
+/* ── hero headline ────────────────────────────────────────────────────────────── */
 .heroTitle {
   position: absolute;
   left: 50%;
@@ -215,25 +120,169 @@
   transform: translate(-50%, -50%);
 }
 
-/* inline lucide icons in the tagline (systems / businesses / everyday). Sized in `em` so
-   they scale with the headline, kept on the same line as their word, and inheriting the
-   heading ink (currentColor ⇒ correct in light + dark). */
 .tagWord {
   white-space: nowrap;
-}
-.tagIcon {
-  display: inline-block;
-  width: 0.78em;
-  height: 0.78em;
-  margin-right: 0.18em;
-  vertical-align: -0.12em; /* optically centre on the cap height */
-  color: currentColor;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ring,
-  .heroTitle,
-  .arc {
+  .heroTitle {
     transition: none;
+  }
+}
+
+/* ── per-product sections (ProductSections) ──────────────────────────────────────
+   Each row carries the product's raw brand hex as `--p-raw`; `--accent` is DERIVED
+   from it via the same relative-oklch lightness/chroma shift as the home page's
+   product rows (see home.module.css's `.productText`) — light mode darkens the raw
+   hex, dark mode lightens + slightly desaturates it, by the same perceived amount
+   regardless of how light/saturated the hex starts out. Only the global `.eyebrow`
+   reads `--accent` here (color: var(--accent) is already its global rule) — the
+   product's colour otherwise lives ONLY in its logo's own intrinsic brand mark, never
+   as a section background, so 4 different hues read as one system, not a scrapbook. */
+.productSection {
+  --accent: oklch(from var(--p-raw) calc(l - 0.12) calc(c * 0.88) h);
+}
+@media (prefers-color-scheme: dark) {
+  .productSection {
+    --accent: oklch(from var(--p-raw) calc(l + 0.08) calc(c * 0.88) h);
+  }
+}
+
+/* Apple-product-page rhythm: gaps WITHIN a group are kept tight; the gap BETWEEN the
+   intro group and the capability grid is large (and marked by a single hairline). That
+   contrast — not raw whitespace — is what reads as "premium". Tracking tightens as type
+   grows; prose measure is capped (~58ch) even though the container is wide; the brand
+   accent appears only on the eyebrow. One fixed skeleton across all four products. */
+
+/* tighten the global eyebrow's default gap so eyebrow → logo reads as one unit */
+.productSection :global(.eyebrow) {
+  margin-bottom: clamp(12px, 1.4vw, 16px);
+}
+
+/* the tinted ("alt") sections get extra vertical padding so the shaded band reads as a
+   deliberate panel with room to breathe — the borderless plain sections don't show
+   their edges, so they need less. */
+.productSection:global(.sectionAlt) {
+  padding-block: clamp(116px, 17vh, 208px);
+}
+
+/* ── intro group (logo + statement) ───────────────────────────────────────────── */
+/* The logo IS this section's heading (wrapped in an <h2>; its accessible name comes
+   from DualToneLogo's own aria-label). Sized for EQUAL OPTICAL WEIGHT: the box takes
+   each logo's exact viewBox aspect (`--logo-ar`) and a width of √aspect (`--logo-k`)
+   times a shared responsive scale, so every lockup ends with the same bounding-box
+   AREA (w×h) regardless of how wide or tall its own shape is — a compact mark and a
+   long wordmark read at the same size, instead of width-dominant ones looming. Because
+   the box aspect matches the art, the inlined svg fills it exactly and sits flush LEFT
+   (margin 0 + the svg's injected preserveAspectRatio="xMinYMid"), so every logo is
+   left-aligned. Capped to 100% so a very wide lockup can't overflow a narrow screen. */
+.productLogo {
+  /* area === (--logo-scale)² for EVERY logo (width √ar·s × height s/√ar), so one scale
+     governs all four. Min kept low enough that the widest wordmark still fits a phone's
+     content width (≈350px ÷ widest √ar) WITHOUT hitting the 100% cap — past that cap the
+     equal-area relationship would break for the widest logos. */
+  --logo-scale: clamp(106px, 15vw, 196px);
+  margin: 0;
+  width: min(calc(var(--logo-k) * var(--logo-scale)), 100%);
+  aspect-ratio: var(--logo-ar);
+}
+.productLogoSvg {
+  width: 100%;
+  height: 100%;
+}
+
+/* the one-line statement — the section's "intro" type: sized up to ~2× body, tight
+   tracking + tight leading so the big type reads as a single confident object. */
+.productTagline {
+  margin-top: clamp(28px, 3.4vw, 40px);
+  font-size: clamp(1.55rem, 2.6vw, 2.1rem);
+  font-weight: 600;
+  line-height: 1.14;
+  letter-spacing: -0.024em;
+  color: var(--fg);
+  max-width: 22ch;
+  text-wrap: balance;
+}
+
+/* `.productDetail` wraps the body prose and the capability grid. By default (mobile +
+   narrow desktop) they STACK; on a WIDE desktop they sit SIDE BY SIDE in two columns
+   (see the min-width:1080 block). No divider line — spacing (and, when wide, the column
+   gap) separates the prose from the details. */
+.productDetail {
+  margin-top: clamp(18px, 2vw, 24px);
+}
+.productBody {
+  max-width: 58ch; /* cap the read length even in the wide structural container */
+}
+.productBody p {
+  font-size: 1.0625rem; /* ~17px — Apple's desktop body step */
+  line-height: 1.6;
+  letter-spacing: -0.004em;
+  color: var(--muted);
+}
+.productBody p + p {
+  margin-top: 1.05em;
+}
+
+/* a 2×2 grid of feature cards (bold title + one supporting line) — a tidy grid reads as
+   design where a dashed bullet list reads as a list. */
+.productGrid {
+  margin: 0;
+  margin-top: clamp(40px, 5vw, 60px); /* stacked: separates from the prose above (no line) */
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(26px, 3vw, 40px) clamp(32px, 5vw, 80px);
+  max-width: 880px;
+}
+.cardTitle {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.014em;
+  color: var(--fg);
+}
+.cardDetail {
+  margin-top: 7px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 34ch;
+}
+
+.productStatus {
+  margin-top: clamp(40px, 5vw, 56px);
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* outbound "Visit <product>" link wrapper — same top gap as the status it replaces */
+.productCta {
+  margin-top: clamp(40px, 5vw, 56px);
+}
+
+/* mobile: keep the current stacked layout; the feature grid collapses to one column */
+@media (max-width: 880px) {
+  .productGrid {
+    grid-template-columns: 1fr;
+    gap: clamp(22px, 6vw, 30px);
+  }
+}
+
+/* wide desktop: the prose and the capability grid sit SIDE BY SIDE (two columns) */
+@media (min-width: 1080px) {
+  .productDetail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(48px, 6vw, 104px);
+    align-items: start;
+  }
+  .productGrid {
+    margin-top: 0; /* aligns with the top of the prose column instead of sitting below */
+    max-width: none; /* fill its own column */
   }
 }

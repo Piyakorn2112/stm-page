@@ -1,23 +1,18 @@
 "use client";
 
 /**
- * ProductHero — the /product landing hero. Follows the shared hero convention
+ * ProductHero — the /product hub's hero. Follows the shared hero convention
  * (full-viewport 100dvh section, clipped, HeroScrollIndicator pinned bottom-centre).
  *
- * Composition:
- *   • the animated brand ring, centred on a point near the TOP, blooming up on enter;
- *   • the product logos riding a circular ARC whose centre is BELOW the content — so
- *     they ride the TOP of a dome and rise up from the bottom as they cycle, peaking
- *     (full size) at the dome's apex, staying upright (counter-rotated) so they read;
- *   • the headline between the ring and the rising arc.
+ * Composition: the animated brand ring, truly centred (size-independent), blooming up
+ * on enter behind the headline. Below this hero, ProductSections lists each product.
  *
  * The ring is locked to one seed (RING_SEED) and painted in the custom full-colour
  * `colorCycle` mode (the whole wire cycles vividly through the three brand colours in
- * OKLab — see HeroTwistRing). The logos are monochrome SVGs masked with `var(--fg)`,
- * so they re-colour themselves correctly in light AND dark mode (see styles).
+ * OKLab — see HeroTwistRing).
  *
- * Enter: the ring scales up (expressive overshoot) while it blooms; the headline and
- * the logo arc fade/slide in on a short stagger after it. Honours reduced-motion.
+ * Enter: the ring scales up (expressive overshoot) while it blooms; the headline fades
+ * + slides in on a short stagger after it. Honours reduced-motion.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -28,14 +23,6 @@ import styles from "./product.module.css";
 
 const RING_SEED = "o39989";
 const RING_SEED_1 = "o3998";
-
-// The four products, in the order they ride the arc.
-const LOGOS = [
-  { slug: "members", src: "/logos/logo-members-black.svg", label: "Members" },
-  { slug: "cmission", src: "/logos/logo-cmission-black.svg", label: "CMission" },
-  { slug: "beacon", src: "/logos/logo-beacon-black.svg", label: "Beacon" },
-  { slug: "latent-write", src: "/logos/logo-latenwrite-black.svg", label: "Latent Write" },
-] as const;
 
 // Ring diameter from the live viewport — large/expansive (it may bleed past the left &
 // right edges). Sized off the LARGER side so it stays grand on tall phones too.

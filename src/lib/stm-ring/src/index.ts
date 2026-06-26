@@ -19,5 +19,6 @@
  */
 
 export * from "./stmRingCore";
+export * from "./bloomCodeCore"; // Bloom Code codec + renderer (encodeBloomSVG …), synced from the stm-ring source repo
 export { default as StmRing } from "./StmRing";
 export { default as MorphRing } from "./MorphRing";

@@ -4,6 +4,7 @@
  */
 import Nav from "@/components/ui/Nav/Nav";
 import Footer from "@/components/ui/Footer/Footer";
+import CtaSection from "@/components/ui/CtaSection/CtaSection";
 import { homeNavConfig } from "./nav.config";
 import HomeReveal from "./HomeReveal";
 import { Mission } from "./sections/Mission";
@@ -24,6 +25,11 @@ export default function HomePage() {
           <Identity />
           <Products />
         </HomeReveal>
+        <CtaSection
+          title="Ready to build something that lasts?"
+          body="Tell us what you're working on. We move fast, think through details, and stay until the thing is right."
+          alt
+        />
       </main>
       <Footer />
     </>

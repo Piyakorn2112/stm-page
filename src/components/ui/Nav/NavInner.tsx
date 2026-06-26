@@ -18,7 +18,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
-import { NAV_ICON_SIZE, NAV_ICON_STROKE, NAV_ITEMS, PRODUCTS, productHref, type NavItem } from "./navLinks";
+import { NAV_ICON_SIZE, NAV_ICON_STROKE, NAV_ITEMS, PRODUCTS, productAnchor, type NavItem } from "./navLinks";
 import mega from "./mega.module.css";
 
 const ALL_PRODUCTS_HREF = "/product"; // the "View all products" overview
@@ -173,7 +173,7 @@ export default function NavInner({
             </button>
             {/* big bold solid product names — same treatment as the desktop sheet, plus a chevron */}
             {PRODUCTS.map((p) => (
-              <Link key={p.slug} className={mega.mItem} href={productHref(p.slug)} onClick={navTo}>
+              <Link key={p.slug} className={mega.mItem} href={productAnchor(p.slug)} onClick={navTo}>
                 {p.label}
                 <ChevronRight className={mega.mItemChevron} size={18} strokeWidth={2} aria-hidden />
               </Link>
@@ -199,7 +199,7 @@ export default function NavInner({
         <div ref={megaInnerRef} className={mega.megaInner}>
           <div className={mega.megaList}>
             {PRODUCTS.map((p) => (
-              <Link key={p.slug} className={mega.megaItem} href={productHref(p.slug)} onClick={navTo}>
+              <Link key={p.slug} className={mega.megaItem} href={productAnchor(p.slug)} onClick={navTo}>
                 {p.label}
               </Link>
             ))}

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CardExperience — the interactive hero of /build. Holds the nickname (drives the
+ * CardExperience — the interactive hero of /work. Holds the nickname (drives the
  * card's name + the ring's hash) and a random employee id. The badge fills the
  * full-viewport hero. The name is typed DIRECTLY on the 3D badge: clicking the card's
  * name field focuses a hidden-but-real input (so the mobile keyboard / IME / paste all

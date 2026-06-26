@@ -1,27 +1,637 @@
-/* /contact — minimal placeholder. A nav, a centred email, and the footer. The hero
-   fills the space between nav and footer with the email quietly centred. */
-.page {
+/* /contact — contact details centred in the hero; a crafted "paper" form bleeds up into
+   the hero bottom and, on submit, folds into a sealed letter and flies away. Input visual
+   mirrors the badge name field (rounded-rect, indigo focus). See ContactForm.tsx. */
+
+/* ── hero shell ─────────────────────────────────────────────────────────────────── */
+.hero {
   position: relative;
+  width: 100%;
+}
+
+/* faint asterisk-grid backdrop — the brand mark tiled as a texture. Painted via a MASK
+   (the tile only carries the shape) with background-color = --fg, so it adapts to
+   light/dark from the one token, at a very low opacity. Sits behind all hero content. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--fg);
+  opacity: 0.05;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='60'%20height='60'%20viewBox='0%200%2060%2060'%3E%3Cg%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20transform='translate(18%2018)'%3E%3Cpath%20d='M12%206v12'/%3E%3Cpath%20d='M17.196%209%206.804%2015'/%3E%3Cpath%20d='m6.804%209%2010.392%206'/%3E%3C/g%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='60'%20height='60'%20viewBox='0%200%2060%2060'%3E%3Cg%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20transform='translate(18%2018)'%3E%3Cpath%20d='M12%206v12'/%3E%3Cpath%20d='M17.196%209%206.804%2015'/%3E%3Cpath%20d='m6.804%209%2010.392%206'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-size: 60px 60px;
+  mask-size: 60px 60px;
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}
+@media (prefers-color-scheme: dark) {
+  .hero::before { opacity: 0.06; }
+}
+
+/* contact block — centred in the first viewport */
+.heroContact {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--bg);
   display: flex;
   flex-direction: column;
-}
-.hero {
-  flex: 1;
-  display: grid;
-  place-items: center;
-  padding: 140px 24px 96px;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 1.6vw, 20px);
   text-align: center;
+  padding-inline: var(--gutter);
 }
+
 .email {
   font-family: var(--font-mono);
-  font-size: 0.95rem;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
   letter-spacing: 0.01em;
-  color: var(--muted);
+  color: var(--fg);
   transition: color 200ms var(--ease-standard);
 }
-.email:hover {
+.email:hover { color: var(--muted); }
+
+.phone {
+  font-family: var(--font-mono);
+  font-size: clamp(0.85rem, 1.25vw, 1rem);
+  letter-spacing: 0.03em;
+  color: var(--faint);
+  transition: color 200ms var(--ease-standard);
+}
+.phone:hover { color: var(--fg); }
+
+/* paper sits below the contact block but pulled UP so its top peeks into the hero
+   (the user scrolls a little to reveal the full form) */
+.paperStage {
+  position: relative;
+  z-index: 2;
+  margin-top: clamp(-46vh, -40vh, -32vh);
+  padding-bottom: clamp(96px, 16vh, 200px);
+  display: flex;
+  justify-content: center;
+  padding-inline: var(--gutter);
+}
+
+/* ── paper / fold stage ─────────────────────────────────────────────────────────────
+   --paper: the sheet colour (warm white / dark slab). Easing tokens are scoped here. */
+.stage {
+  /* paper matches the page's own surface token (neutral, not warm) so the card reads as
+     part of the page; its edge comes from a slightly-stronger border + a soft shadow. */
+  --paper: var(--surface);
+  --paper-2: #f7f8fa; /* folded-leaf / envelope face — only a hair off white (was too grey/dark) */
+  --paper-line: #e6e7ea;
+  --paper-border: rgba(10, 10, 15, 0.14); /* the paper's edge hairline (card border + envelope fold line) */
+  --shade-max: 0.07; /* subtle leaf-darkening on fold — kept low so the light-mode envelope stays light */
+  /* crafted envelope (EnvelopeMark) tones — a paper-white mail in light. Four facets
+     (flap lightest → sides → bottom darkest) + rim/lip catch-lights + inner/drop shadows. */
+  --env-paper0: #ffffff;
+  --env-paper1: #eef0f3;
+  --env-flap0: #ffffff;
+  --env-flap1: #f5f6f9;
+  --env-side0: #eef0f3;
+  --env-side1: #e6e8ec;
+  --env-bot0: #e9ebee;
+  --env-bot1: #d9dbe1;
+  --env-rim: #ffffff;
+  --env-rim-o: 0.7;
+  --env-lip-o: 0.55;
+  --env-crease-o: 0.75;
+  --env-ishadow: #2e3340;
+  --env-ishadow-o: 0.14;
+  --env-drop: rgba(20, 22, 30, 0.2);
+  --ease-fold: cubic-bezier(0.645, 0.045, 0.355, 1); /* easeInOutCubic — the collapse */
+  --ease-snap: cubic-bezier(0.34, 1.5, 0.64, 1);     /* easeOutBack — rewarding beats */
+  --ease-out-quart: cubic-bezier(0.165, 0.84, 0.44, 1);
+  /* split fly: X accelerates away, Y launches up then eases — different curves ⇒ a smooth
+     arc (Tobias Ahlin layered method); fade holds opaque then drops late. */
+  --ease-fly-x: cubic-bezier(0.5, 0, 0.85, 0.4);
+  --ease-fly-y: cubic-bezier(0.32, 0.5, 0.36, 1);
+  --ease-fly-fade: cubic-bezier(0.6, 0, 0.88, 0.2);
+
+  position: relative;
+  width: min(440px, 100%);
+  perspective: 1600px;
+  perspective-origin: 50% 42%;
+}
+@media (prefers-color-scheme: dark) {
+  .stage {
+    --paper-2: #1d1e25;
+    --paper-line: #2b2d35;
+    --paper-border: rgba(255, 255, 255, 0.12);
+    --shade-max: 0.2;
+    --env-paper0: #2a2c34;
+    --env-paper1: #1f212a;
+    --env-flap0: #30323c;
+    --env-flap1: #282a33;
+    --env-side0: #25272f;
+    --env-side1: #202229;
+    --env-bot0: #1f212a;
+    --env-bot1: #16171d;
+    --env-rim: #ffffff;
+    --env-rim-o: 0.09;
+    --env-lip-o: 0.1;
+    --env-crease-o: 0.1;
+    --env-ishadow: #000000;
+    --env-ishadow-o: 0.32;
+    --env-drop: rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* the mailer — outer fly element (animates X + fade). Holds the inner. */
+.mailer {
+  position: relative;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+}
+/* inner fly element (animates the bob, then Y + scale + rotate). Splitting X (outer) from
+   Y/scale/rotate (inner) lets each be a clean 2-stop animation ⇒ smooth arc, no stutter. */
+.mailerInner {
+  position: relative;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+}
+
+/* resting paper shadow — a LAYERED, soft, diffuse cast (multiple low-alpha steps, not one hard
+   shadow) so the card reads as a real sheet of paper LIFTED off the flat page: a clear, tactile
+   design object distinct from the site's flat, shadowless UI. Its own layer so we ramp opacity
+   (never animate box-shadow). */
+.restShadow {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 1.5px rgba(18, 18, 28, 0.04),
+    0 5px 12px -2px rgba(18, 18, 28, 0.05),
+    0 14px 28px -6px rgba(18, 18, 28, 0.06),
+    0 28px 50px -12px rgba(18, 18, 28, 0.07);
+  transform: translateZ(-2px); /* sit behind the sheet (z-index is unreliable in preserve-3d) */
+}
+@media (prefers-color-scheme: dark) {
+  .restShadow {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.26),
+      0 6px 14px -2px rgba(0, 0, 0, 0.32),
+      0 16px 32px -6px rgba(0, 0, 0, 0.4),
+      0 32px 56px -14px rgba(0, 0, 0, 0.42);
+  }
+}
+
+/* ── the three-panel sheet ──────────────────────────────────────────────────────── */
+.sheet {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 33.34%;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+.pTop { top: 0; transform-origin: 50% 100%; }      /* hinges on its bottom edge */
+.pMid { top: 33.33%; }                             /* anchor — never rotates */
+.pBot { top: 66.66%; transform-origin: 50% 0%; }   /* hinges on its top edge */
+
+/* a panel face (paper). Two faces fold print-to-print so backs (blank paper) show after.
+   Leaves are NOT individually rounded (that showed as 3 rounded sections). Instead the FRONT
+   faces round only the sheet's true OUTER corners (one clean rounded letter), and the single
+   visible envelope face (.envFront) is rounded on its own — see below. */
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  overflow: hidden;
+  background: var(--paper);
+}
+.face.back {
+  transform: rotateX(180deg); /* backface-visibility hides whichever face turns away ⇒ no z-fight */
+  background: var(--paper-2);
+  border-radius: 13px; /* match the envelope so leaves behind it don't poke past its rounded corners */
+}
+/* the unfolded "letter" reads as ONE card: only the sheet's outer corners round, no per-leaf
+   borders (borders/internal radii are what made it look like 3 sections). The MIDDLE leaf — the
+   one that stacks coincident UNDER the rounded envelope when folded — is rounded so its square
+   corners can't exceed the envelope's rounded corners during the collapse (the reported bug). */
+.pTop .face.front { border-top-left-radius: 16px; border-top-right-radius: 16px; }
+.pBot .face.front { border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+.pMid .face.front { border-radius: 13px; }
+
+/* per-leaf lighting overlay — opacity ramps with the fold (leaf turns from the light) */
+.shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+  opacity: 0;
+  pointer-events: none;
+  transform: translateZ(-0.3px); /* after the leaf's 180° flip this resolves IN FRONT of its back face */
+}
+
+/* ── the "written letter" surface marks ─────────────────────────────────────────────
+   hidden at rest (the form is what you see); fade in as the form settles away. */
+.stamp {
+  position: absolute;
+  left: clamp(20px, 6%, 28px);
+  top: clamp(20px, 8%, 28px);
+  width: 52px;
+  height: 52px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg); /* black ink (white in dark) */
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  border: 1.5px dashed var(--border-strong);
+}
+.lnTitle,
+.ln {
+  position: absolute;
+  height: 9px;
+  border-radius: 5px;
+  background: var(--paper-line);
+  opacity: 0;
+}
+.lnTitle { left: 92px; top: 30px; width: 120px; }
+.ln { left: 9%; }
+
+/* the crafted golden-ratio envelope (EnvelopeMark) — centred on the card, hidden at rest. On send
+   it SPRINGS up (scale bounce) while its flap folds down and the stamp + address lines pop in.
+   Golden aspect (1000/618), preserve-3d so the flap can fold in real 3D. */
+.envelope {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  width: 100%;
+  aspect-ratio: 1000 / 618; /* golden — the folded mail's dimension */
+  transform: translateY(-50%) translateZ(4px);
+  transform-style: preserve-3d;
+  opacity: 0;
+  pointer-events: none;
+}
+.envBody {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible; /* let the drop-shadow extend */
+}
+/* the flap hinges on its top edge and folds down (3D rotateX); double-sided so its underside
+   shows while it's still open/back. */
+.envFlap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70%;
+  display: block;
+  overflow: visible;
+  transform-origin: 50% 0;
+  transform: rotateX(0deg);
+}
+/* stamp — the brand Asterisk in a dashed frame (same as the form's), BOTTOM-LEFT, on top of the flap */
+.envStamp {
+  position: absolute;
+  bottom: 10%;
+  left: 7%;
+  width: 14%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 4%, var(--env-paper0));
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 7px;
+  transform: translateZ(14px); /* clearly in front of the folded flap */
+  opacity: 0;
+}
+.envStamp svg { width: 58%; height: 58%; }
+/* address skeleton — a few short lines in the lower area, to the RIGHT of the stamp */
+.envAddr {
+  position: absolute;
+  left: 28%;
+  bottom: 13%;
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transform: translateZ(1px);
+}
+.envAddr span {
+  height: 7px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--fg) 18%, transparent);
+  opacity: 0;
+}
+.envAddr span:nth-child(1) { width: 72%; }
+.envAddr span:nth-child(2) { width: 100%; }
+.envAddr span:nth-child(3) { width: 54%; }
+
+/* ── live form layer (the opaque rounded card at rest) ──────────────────────────────
+   Opaque (paper bg + border + 16px radius) so at rest it presents as ONE clean rounded
+   card, hiding the rounded fold-leaves + their seams beneath. On submit it fades, revealing
+   the layered "written letter" that then folds. Carries its own stamp so the mark is visible
+   at rest (the sheet's matching stamp sits directly beneath ⇒ seamless hand-off as it fades). */
+.formLayer {
+  position: relative; /* in flow ⇒ defines the mailer's height; the sheet overlays it */
+  transform: translateZ(3px); /* sit in FRONT of the sheet (z-index is unreliable in preserve-3d) */
+  background: var(--paper);
+  border: 1px solid var(--paper-border);
+  border-radius: 18px;
+  padding: clamp(88px, 17%, 104px) clamp(26px, 8%, 38px) clamp(32px, 9%, 44px);
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3.8vw, 26px);
+}
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 3.4vw, 22px);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+.label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding-left: 1px;
+}
+
+/* inputs — softly inset fields on the paper (a faint fill + the paper hairline), lifting to a
+   clean white field with an indigo edge + a soft focus ring when active. The considered focus
+   state + the inset fill are what make the form feel crafted rather than templated. */
+.input {
+  background: color-mix(in srgb, var(--fg) 2.5%, transparent);
+  border: 1px solid var(--paper-border);
+  border-radius: 11px;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--fg);
+  line-height: 1.5;
+  width: 100%;
+  transition: border-color 180ms var(--ease-standard), box-shadow 200ms var(--ease-standard),
+    background 180ms var(--ease-standard);
+}
+.input:focus,
+.inputFocused {
+  outline: none;
+  border-color: var(--indigo);
+  background: var(--paper);
+  box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--indigo) 13%, transparent);
+}
+.input:hover:not(:focus) { border-color: color-mix(in srgb, var(--fg) 22%, transparent); }
+.input::placeholder { color: var(--faint); }
+textarea.input { resize: vertical; min-height: 116px; }
+
+/* custom select */
+.selectWrap { position: relative; }
+.selectTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  user-select: none;
+}
+.selectEmpty { color: var(--faint); }
+.selectChevron {
+  flex-shrink: 0;
+  color: var(--faint);
+  transition: transform 220ms var(--ease-standard), color 200ms var(--ease-standard);
+}
+.selectChevronOpen { transform: rotate(180deg); color: var(--indigo); }
+.selectDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+}
+@media (prefers-color-scheme: dark) {
+  .selectDropdown { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.32); }
+}
+.selectOption {
+  padding: 9px 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--fg);
+  transition: background 140ms var(--ease-standard);
+}
+.selectOption:hover { background: color-mix(in srgb, var(--fg) 6%, transparent); }
+.selectOptionSelected { color: var(--indigo); font-weight: 500; }
+
+/* send button — solid pill (nav-CTA identity) with a paper-plane lucide mark; a soft resting
+   shadow lifts it off the paper (crafted), hover lightens per the site convention. */
+.sendBtn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: var(--radius-pill);
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 0.96rem;
+  font-weight: 540;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  margin-top: clamp(6px, 1.5vw, 12px);
+  box-shadow: 0 2px 10px -2px color-mix(in srgb, var(--fg) 26%, transparent);
+  transition: opacity 200ms var(--ease-standard), box-shadow 200ms var(--ease-standard);
+}
+.sendBtn:hover {
+  opacity: 0.82;
+  box-shadow: 0 4px 15px -3px color-mix(in srgb, var(--fg) 32%, transparent);
+}
+
+/* ── success state (sibling of the flying mailer) ───────────────────────────────── */
+.success {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+}
+.successMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  color: var(--indigo);
+  background: color-mix(in srgb, var(--indigo) 12%, transparent);
+}
+.successTitle {
+  font-size: clamp(1.3rem, 2.4vw, 1.6rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+.successSub { font-size: 1rem; color: var(--muted); }
+
+/* ════════════════════════════════════════════════════════════════════════════════
+   THE SEQUENCE — triggered by data-sent="1". Total ≈ 2.5s. transform/opacity only.
+   ════════════════════════════════════════════════════════════════════════════════ */
+.mailer[data-sent="1"] { pointer-events: none; }
+
+/* 1 — the form settles away (0–320ms) as the written letter fades in beneath it */
+.mailer[data-sent="1"] .formLayer {
+  animation: cf-formSettle 0.32s var(--ease-out-quart) forwards;
+}
+.mailer[data-sent="1"] .lnTitle,
+.mailer[data-sent="1"] .ln { animation: cf-fadeIn 0.34s var(--ease-standard) 0.14s forwards; }
+
+/* 2 — fold collapse: a DELIBERATE tri-fold — the bottom leaf folds up first, THEN (after a
+   0.18s stagger) the top leaf folds down onto it, each with a visible crease flash as it seats.
+   Reads clearly as two folds of a letter rather than one blurry collapse. */
+.mailer[data-sent="1"] .panel { will-change: transform; }
+.mailer[data-sent="1"] .pBot { animation: cf-foldBottom 0.58s var(--ease-fold) 0.34s forwards, cf-fadeOut 0.22s var(--ease-standard) 1.04s forwards; }
+.mailer[data-sent="1"] .pTop { animation: cf-foldTop 0.58s var(--ease-fold) 0.52s forwards, cf-fadeOut 0.22s var(--ease-standard) 1.08s forwards; }
+.mailer[data-sent="1"] .pBot .shade { animation: cf-shadeIn 0.58s var(--ease-fold) 0.34s forwards; }
+.mailer[data-sent="1"] .pTop .shade { animation: cf-shadeIn 0.58s var(--ease-fold) 0.52s forwards; }
+.mailer[data-sent="1"] .restShadow { animation: cf-fadeOut 0.56s var(--ease-standard) 0.34s forwards; }
+/* once folded, the anchor + bottom leaf (and the address lines they carry) fade away, leaving
+   ONLY the rounded envelope face (.envFront) — so the flying envelope is a single clean rounded
+   shape whose corners reveal the page, not a square leaf behind it. */
+.mailer[data-sent="1"] .pMid { animation: cf-fadeOut 0.2s var(--ease-standard) 1.04s forwards; }
+
+/* 3 — the crafted envelope SPRINGS in as the fold lands: the body scale-bounces up, the flap
+   folds down from the back (overshoot), then the address lines slide in + the stamp pops. */
+.mailer[data-sent="1"] .envelope { animation: cf-envIn 0.55s var(--ease-standard) 0.95s forwards; }
+.mailer[data-sent="1"] .envFlap { animation: cf-flapFold 0.62s var(--ease-standard) 1.05s forwards; }
+.mailer[data-sent="1"] .envAddr span { animation: cf-lineIn 0.36s var(--ease-snap) forwards; }
+.mailer[data-sent="1"] .envAddr span:nth-child(1) { animation-delay: 1.3s; }
+.mailer[data-sent="1"] .envAddr span:nth-child(2) { animation-delay: 1.37s; }
+.mailer[data-sent="1"] .envAddr span:nth-child(3) { animation-delay: 1.44s; }
+.mailer[data-sent="1"] .envStamp { animation: cf-stampIn 0.44s var(--ease-snap) 1.46s forwards; }
+
+/* 4 — bob then fly (after the spring reveal completes) */
+.mailer[data-sent="1"] .mailerInner {
+  will-change: transform;
+  animation: cf-bob 0.34s var(--ease-snap) 1.6s forwards, cf-flyY 1s var(--ease-fly-y) 1.94s forwards;
+}
+/* 5 — fly away: X (+ fade) on the OUTER, Y/scale/rotate on the INNER — each a clean 2-stop
+   tween (no easing reset = no stutter); differing X/Y curves bend the path into a smooth arc. */
+.mailer[data-sent="1"] {
+  will-change: transform, opacity;
+  animation: cf-flyX 1s var(--ease-fly-x) 1.94s forwards, cf-flyFade 1s var(--ease-fly-fade) 1.94s forwards;
+}
+
+/* 6 — success emerges as the envelope clears */
+.success[data-sent="1"] { animation: cf-successIn 0.52s var(--ease-snap) 2.4s forwards; }
+.success[data-sent="1"] .successMark { animation: cf-pulse 0.6s var(--ease-snap) 2.64s; }
+
+/* the form + rest-shadow end on visibility:hidden so they drop OUT of compositing once
+   faded — otherwise the (full-size) form box + card shadow keep getting composited as the
+   mailer scales away, which reads as a leftover "container/chrome" around the flying mail. */
+@keyframes cf-formSettle { to { opacity: 0; transform: translateY(-6px); filter: blur(3px); visibility: hidden; } }
+@keyframes cf-fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cf-fadeOut { to { opacity: 0; visibility: hidden; } }
+/* NB: after a 180° flip, local +Z maps to world −Z. To seat the folded leaves IN FRONT of
+   the anchor middle panel (so its address lines are occluded), the leaf-stacking translateZ
+   is NEGATIVE (→ positive world-Z). Top leaf (−2) sits over the bottom leaf (−1). */
+@keyframes cf-foldBottom { to { transform: rotateX(180deg) translateZ(-1px); } }
+@keyframes cf-foldTop { to { transform: rotateX(-180deg) translateZ(-2px); } }
+/* shade ramps IN as the leaf turns, then back OUT by the time it lands — so it gives the fold
+   dimensionality WITHOUT leaving the settled envelope darkened. */
+@keyframes cf-shadeIn { 0% { opacity: 0; } 55% { opacity: var(--shade-max); } 100% { opacity: 0; } }
+/* the envelope scale-bounces up (a damped spring); the flap folds down from the back, overshoots
+   past flat, and settles; the stamp pops; the address lines slide in. */
+@keyframes cf-envIn {
+  0% { opacity: 0; transform: translateY(-50%) translateZ(4px) scale(0.42); }
+  50% { opacity: 1; transform: translateY(-50%) translateZ(4px) scale(1.07); }
+  72% { opacity: 1; transform: translateY(-50%) translateZ(4px) scale(0.97); }
+  88% { opacity: 1; transform: translateY(-50%) translateZ(4px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(-50%) translateZ(4px) scale(1); }
+}
+@keyframes cf-flapFold {
+  0% { transform: rotateX(148deg); }
+  52% { transform: rotateX(-15deg); }
+  74% { transform: rotateX(7deg); }
+  90% { transform: rotateX(-2deg); }
+  100% { transform: rotateX(0deg); }
+}
+@keyframes cf-stampIn {
+  0% { opacity: 0; transform: translateZ(14px) scale(0.3); }
+  60% { opacity: 1; transform: translateZ(14px) scale(1.15); }
+  100% { opacity: 1; transform: translateZ(14px) scale(1); }
+}
+@keyframes cf-lineIn {
+  0% { opacity: 0; transform: translateZ(1px) translateX(-12px); }
+  100% { opacity: 1; transform: translateZ(1px) translateX(0); }
+}
+
+/* bob: a small anticipation dip, then lift + grow (held for the fly to take over) */
+@keyframes cf-bob {
+  0% { transform: translateY(0) scale(1); }
+  34% { transform: translateY(3px) scale(0.995); }
+  100% { transform: translateY(-14px) scale(1.045); }
+}
+/* fly — split into clean 2-stop tweens (no intermediate keyframes ⇒ no per-segment easing
+   reset ⇒ no stutter). cf-flyY's 0% matches the bob's end so the hand-off is seamless. */
+@keyframes cf-flyX {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(230px); }
+}
+@keyframes cf-flyY {
+  0% { transform: translateY(-14px) scale(1.045) rotate(0deg); }
+  100% { transform: translateY(-540px) scale(0.16) rotate(-14deg); }
+}
+@keyframes cf-flyFade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes cf-successIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes cf-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* ── reduced motion — skip the fold/fly, just cross-fade to success ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .mailer[data-sent="1"] { opacity: 0; }
+  .mailer[data-sent="1"],
+  .mailer[data-sent="1"] * { animation: none !important; }
+  .success[data-sent="1"] { animation: cf-fadeIn 0.16s linear forwards; }
+}
+
+/* ── responsive ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .fieldRow { grid-template-columns: 1fr; }
 }

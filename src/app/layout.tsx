@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-// Inter is the site's single typeface. We lean on weight + tight tracking at
-// display sizes (and the brand's selective-bold-word device) for personality,
-// rather than a second display family. Data/labels use a system monospace.
+// Inter — the primary typeface. Weight + tight tracking carry personality at display
+// sizes; the brand's selective-bold-word device does the rest.
 const inter = Inter({
   variable: "--font-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+// JetBrains Mono — the monospace typeface (footer labels, badge hint, contact details).
+// Loaded via next/font so it self-hosts and renders identically on every browser/OS,
+// replacing the old ui-monospace/SF Mono/Menlo system-font stack.
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
   display: "swap",
 });
@@ -23,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body>{children}</body>
     </html>
   );

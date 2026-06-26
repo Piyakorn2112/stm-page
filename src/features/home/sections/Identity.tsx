@@ -24,7 +24,7 @@ export function Identity() {
             Every person carries their own generated ring, and works the way the system does:
             multi-disciplinary, high-agency, aligned but never boxed in.
           </p>
-          <SectionLink href="/build">How we work</SectionLink>
+          <SectionLink href="/work">How we work</SectionLink>
         </div>
         <div className={styles.idGridWrap}>
           <IdentityGrid />

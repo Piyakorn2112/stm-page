@@ -14,7 +14,7 @@
  * `--accent`, so the name and its "Explore" link always match.
  */
 import type { CSSProperties } from "react";
-import { PRODUCTS, productHref } from "@/components/ui/Nav/navLinks";
+import { PRODUCTS, productAnchor } from "@/components/ui/Nav/navLinks";
 import SectionLink from "@/components/ui/SectionLink/SectionLink";
 import { accent } from "@/utils/accent";
 import styles from "@/features/home/home.module.css";
@@ -72,7 +72,7 @@ export function Products() {
               <div className={styles.productText} style={rawColor(color)}>
                 <h3 className={styles.productName}>{label}</h3>
                 <p className={styles.productDesc}>{desc}</p>
-                <SectionLink href={productHref(slug)}>Explore {label}</SectionLink>
+                <SectionLink href={productAnchor(slug)}>Explore {label}</SectionLink>
               </div>
             );
             return (

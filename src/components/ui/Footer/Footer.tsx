@@ -2,6 +2,9 @@
  * Footer — shared site footer (brand + nav columns). Kept out of page content so layout
  * and content stay separate. Uses the site primitives stylesheet. A faint, greyscale,
  * worker-driven ring matrix (FooterMatrix) sits behind the content as the backdrop.
+ *
+ * Anchor links use absolute paths (/#anchor) so they work correctly from any page, not
+ * just the home page.
  */
 import Link from "next/link";
 import FooterMatrix from "@/components/graphic/FooterMatrix/FooterMatrix";
@@ -22,18 +25,21 @@ export default function Footer() {
         <div className={styles.footerCols}>
           <div className={styles.footerCol}>
             <span className={styles.footerColHead}>Company</span>
-            <a href="#about">About</a>
-            <a href="#philosophy">Philosophy</a>
-            <a href="#form">Where it takes form</a>
+            <Link href="/#about">About</Link>
+            <Link href="/#philosophy">Philosophy</Link>
+            <Link href="/work">How We Work</Link>
           </div>
           <div className={styles.footerCol}>
-            <span className={styles.footerColHead}>System</span>
-            <a href="#identity">Identity</a>
-            <a href="/build">How We Work</a>
+            <span className={styles.footerColHead}>Products</span>
+            <Link href="/product#members">Members</Link>
+            <Link href="/product#cmission">Cmission</Link>
+            <Link href="/product#beacon">Beacon</Link>
+            <Link href="/product#latent-write">Latent Write</Link>
+            <Link href="/product">View all</Link>
           </div>
           <div className={styles.footerCol}>
             <span className={styles.footerColHead}>Contact</span>
-            <a href="/contact">Get in touch</a>
+            <Link href="/contact">Get in touch</Link>
           </div>
         </div>
       </div>

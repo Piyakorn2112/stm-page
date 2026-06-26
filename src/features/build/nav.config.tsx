@@ -12,7 +12,7 @@ export const buildNavConfig: NavConfig = {
   hideOverHero: false,
   pastClass: "navScrolled",
   anchorPrefix: "/",
-  currentRoute: "/build",
+  currentRoute: "/work",
   brand: (
     <Link className={styles.brand} href="/" aria-label="Srang Tech Mai, home">
       <span className={styles.brandMark} />

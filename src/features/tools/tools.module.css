@@ -1,0 +1,56 @@
+/* /tools index — minimal list. Top padding clears the always-shown fixed nav. */
+.main {
+  padding-top: 96px;
+  min-height: 70vh;
+}
+
+.toolList {
+  list-style: none;
+  margin-top: 2.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 56ch;
+}
+
+.toolCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 22px 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s var(--ease-standard), transform 0.2s var(--ease-standard);
+}
+
+.toolCard:hover {
+  border-color: var(--fg);
+  transform: translateY(-2px);
+}
+
+.toolName {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.18rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.toolName svg {
+  color: var(--muted);
+  transition: transform 0.2s var(--ease-standard);
+}
+
+.toolCard:hover .toolName svg {
+  transform: translate(2px, -2px);
+  color: var(--fg);
+}
+
+.toolDesc {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
