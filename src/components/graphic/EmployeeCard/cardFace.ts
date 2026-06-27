@@ -25,7 +25,11 @@ const ID_INK = "#b9bac1";
 // border (signals "type here" / active input); once it holds a name and loses focus it
 // collapses to plain ink text with no chrome. The badge print is a white card in BOTH
 // site themes, so these greys + the brand accent are scheme-independent by design.
-const PLACEHOLDER = "Enter a name";
+let placeholder = "Enter a name";
+/** Set the badge name-field placeholder (localized; the hosting component sets it per locale). */
+export function setCardPlaceholder(text: string) {
+  placeholder = text.trim() || "Enter a name";
+}
 const PLACEHOLDER_INK = "#9596a0"; // --faint
 const FIELD_BORDER_IDLE = "#d3d4da"; // faint grey — empty default state
 const FIELD_ACTIVE = "#5057ff"; // brand indigo — focused border + caret (matches site focus)
@@ -34,9 +38,10 @@ let interFamily: string | null = null;
 function resolveInter(): string {
   if (interFamily) return interFamily;
   const probe = document.createElement("span");
-  probe.style.fontFamily = "var(--font-sans)";
+  // include the Thai fallback so a Thai name / placeholder paints in Prompt, not a system font
+  probe.style.fontFamily = "var(--font-sans), var(--font-thai)";
   document.body.appendChild(probe);
-  interFamily = getComputedStyle(probe).fontFamily || "Inter, system-ui, sans-serif";
+  interFamily = getComputedStyle(probe).fontFamily || "Inter, Prompt, system-ui, sans-serif";
   probe.remove();
   return interFamily;
 }
@@ -101,7 +106,7 @@ function drawNameField(
   const has = name.length > 0;
   const showBorder = focused || !has;
   // text in the field: the name, else the placeholder (shown only when idle + empty)
-  const label = has ? name : focused ? "" : PLACEHOLDER;
+  const label = has ? name : focused ? "" : placeholder;
   // the placeholder reads as a hint ⇒ smaller + lighter (500 vs the name's 700);
   // the actual name keeps the full size + weight
   const isPlaceholder = !has && !focused;

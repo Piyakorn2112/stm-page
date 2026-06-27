@@ -1,115 +1,117 @@
-/* Business-card tool — layout + chrome. */
+/* Business-card tool — a HERO experience. The card lives in the SAME studio environment as
+   the /work employee badge (backdrop sweep + key/shaft/fill/rim + shadow); the scene FILLS the
+   hero. A small Apple-Watch ring cluster floats in-scene (no container) to recolour the card:
+   centre-right on desktop, bottom-centre on mobile. The chosen ring's brand colour threads the
+   page as a live --accent. Below the fold: a refined, FLAT form. */
 .tool {
-  max-width: var(--maxw);
-  margin: 0 auto;
-  padding: 88px var(--gutter) 80px;
-  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: 26px;
 }
 
-/* header */
-.head {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.title {
-  font-size: clamp(1.7rem, 3.2vw, 2.5rem);
-  font-weight: 680;
-  letter-spacing: -0.02em;
-  line-height: 1.04;
-}
-.sub {
-  color: var(--muted);
-  max-width: 52ch;
-  font-size: 0.98rem;
-  line-height: 1.5;
-}
-
-/* card + grid side by side */
-.stageRow {
-  display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
-  gap: 20px;
-}
-.cardCol,
-.gridCol {
+/* ══ HERO ══════════════════════════════════════════════════════════════════════════ */
+.hero {
   position: relative;
-  height: 58vh;
-  min-height: 400px;
-  border-radius: var(--radius);
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
 }
-.gridCol {
-  border: 1px solid var(--border);
-  background: var(--bg-soft);
-}
-.cardCol {
-  border: 1px solid var(--border);
-  background: var(--bg-soft);
+
+/* the 3D studio scene fills the whole hero */
+.scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
 }
 
-.hint {
+/* hero copy — pinned near the top, clear of the centred card; non-interactive so drags fall
+   through to the card scene beneath */
+.heroHead {
   position: absolute;
+  top: clamp(88px, 12vh, 128px);
   left: 0;
   right: 0;
-  bottom: 12px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  color: var(--faint);
+  padding-inline: var(--gutter);
   pointer-events: none;
-  text-transform: lowercase;
+}
+.title {
+  font-size: clamp(2.1rem, 5.2vw, 3.5rem);
+  font-weight: 680;
+  line-height: 1.02;
+  letter-spacing: -0.034em;
+  max-width: 20ch;
 }
 
-/* details panel */
-.panel {
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  padding: 22px 24px 24px;
-  background: var(--surface);
+/* the ring selector — a genuinely SMALL Apple-Watch cluster (compact rings), NO container,
+   NO mask. Centre-right on desktop; bottom-centre on mobile. Tap a ring to recolour the card. */
+.selector {
+  position: absolute;
+  z-index: 2;
+  right: clamp(6px, 3vw, 44px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(168px, 17vw, 224px);
+  aspect-ratio: 1;
 }
-.panelHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
+@media (max-width: 760px) {
+  /* bottom-centre on phones */
+  .selector {
+    right: auto;
+    left: 50%;
+    top: auto;
+    bottom: clamp(64px, 10vh, 104px);
+    transform: translateX(-50%);
+    width: clamp(160px, 48vw, 220px);
+  }
+  .heroHead {
+    top: clamp(78px, 10vh, 108px);
+  }
 }
-.panelTitle {
-  font-size: 1.05rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+
+/* ══ FORM ══════════════════════════════════════════════════════════════════════════ */
+.formSection {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(72px, 11vh, 140px) var(--gutter) clamp(96px, 14vh, 168px);
 }
-.accentChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.82rem;
-  font-weight: 600;
+.details {
+  max-width: 600px;
+  margin: 0 auto;
+}
+.detailsHead {
+  text-align: center;
+  margin-bottom: clamp(30px, 4.5vw, 48px);
+}
+.detailsTitle {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 680;
+  letter-spacing: -0.028em;
+  line-height: 1.05;
+}
+.detailsSub {
+  margin-top: 12px;
   color: var(--muted);
-  padding: 5px 12px 5px 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-}
-.accentDot {
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
+  font-size: 1rem;
+  line-height: 1.55;
+  max-width: 42ch;
+  margin-inline: auto;
 }
 
 .fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px 16px;
+  gap: 16px 18px;
 }
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
   min-width: 0;
 }
 .fieldWide {
@@ -123,38 +125,43 @@
   color: var(--faint);
   padding-left: 1px;
 }
+/* flat field: a faint inset fill + a hairline; no shadow. Lifts to a clean surface with
+   the LIVE accent edge + a soft accent focus ring (the chosen ring's brand colour). */
 .input {
   width: 100%;
   background: color-mix(in srgb, var(--fg) 2.5%, transparent);
   border: 1px solid var(--border-strong);
-  border-radius: 11px;
-  padding: 11px 13px;
+  border-radius: 12px;
+  padding: 12px 14px;
   font-size: 0.95rem;
   font-family: inherit;
   color: var(--fg);
   line-height: 1.4;
-  transition: border-color 180ms var(--ease-standard), box-shadow 200ms var(--ease-standard),
-    background 180ms var(--ease-standard);
+  transition: border-color 160ms var(--ease-standard), box-shadow 200ms var(--ease-standard),
+    background 160ms var(--ease-standard);
 }
 .input::placeholder {
   color: var(--faint);
 }
 .input:hover:not(:focus) {
   border-color: color-mix(in srgb, var(--fg) 30%, transparent);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
 }
 .input:focus {
   outline: none;
-  border-color: var(--indigo);
+  border-color: var(--accent);
   background: var(--surface);
-  box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--indigo) 13%, transparent);
+  box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--accent) 13%, transparent);
 }
 
-/* actions */
+/* actions — centred on the page's axis. Solid-pill primary (site CTA identity) + ghost;
+   both FLAT. The print spec sits below as a quiet caption. */
 .actions {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: clamp(26px, 4vw, 36px);
   flex-wrap: wrap;
 }
 .btnPrimary,
@@ -162,43 +169,43 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 42px;
-  padding: 0 20px;
+  height: 44px;
+  padding: 0 22px;
   border-radius: var(--radius-pill);
   font-size: 0.92rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.15s var(--ease-standard), opacity 0.15s var(--ease-standard),
-    background 0.15s var(--ease-standard), border-color 0.15s var(--ease-standard);
+  transition: opacity 0.15s var(--ease-standard), background 0.15s var(--ease-standard),
+    border-color 0.15s var(--ease-standard);
 }
 .btnPrimary {
   background: var(--fg);
   color: var(--bg);
   border: 1px solid var(--fg);
 }
+.btnPrimary:hover {
+  opacity: 0.82;
+}
 .btnGhost {
   background: transparent;
   color: var(--fg);
   border: 1px solid var(--border-strong);
 }
-.btnPrimary:hover,
-.btnGhost:hover {
-  transform: translateY(-1px);
-}
 .btnGhost:hover {
   border-color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
 }
 .btnPrimary:disabled,
 .btnGhost:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: default;
-  transform: none;
 }
 .dims {
-  font-family: var(--font-mono), ui-monospace, monospace;
+  margin-top: 16px;
+  text-align: center;
+  font-family: var(--font-mono), var(--font-thai-mono), ui-monospace, monospace;
   font-size: 0.72rem;
   color: var(--faint);
-  margin-left: auto;
 }
 .spin {
   animation: bc-spin 0.8s linear infinite;
@@ -209,21 +216,218 @@
   }
 }
 
-/* mobile */
-@media (max-width: 900px) {
-  .stageRow {
-    grid-template-columns: 1fr;
+/* ══ EXPORT DIALOG ═══════════════════════════════════════════════════════════════════
+   A flat floating panel over a dimmed scrim (the one place a soft lift is right — a modal
+   genuinely floats above the page). Everything inside is flat: hairlines + tinted states. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 4vw, 40px);
+  overflow-y: auto;
+  background: color-mix(in srgb, #06070b 46%, transparent);
+  animation: bc-scrim-in 0.2s var(--ease-standard);
+}
+.dialog {
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 3vw, 24px);
+  padding: clamp(22px, 4vw, 30px);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  box-shadow: 0 26px 64px -22px rgba(0, 0, 0, 0.45);
+  animation: bc-dialog-in 0.26s var(--ease-overshoot);
+}
+.dialogHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.dialogTitle {
+  margin-top: 4px;
+  font-size: clamp(1.3rem, 2.6vw, 1.6rem);
+  font-weight: 680;
+  letter-spacing: -0.026em;
+  line-height: 1.1;
+}
+.dialogClose {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s var(--ease-standard), background 0.15s var(--ease-standard);
+}
+.dialogClose:hover {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+
+/* preview — both faces; the unselected side dims when exporting a single face */
+.previewRow {
+  display: flex;
+  gap: 12px;
+}
+.previewFace {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  transition: opacity 0.18s var(--ease-standard);
+}
+.previewFace img {
+  width: 100%;
+  aspect-ratio: 90 / 54;
+  object-fit: cover;
+  border-radius: 7px;
+  border: 1px solid var(--border-strong);
+  background: #fff;
+}
+.previewFace figcaption {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  text-align: center;
+}
+.previewDim {
+  opacity: 0.34;
+}
+
+/* option groups */
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(15px, 2.6vw, 20px);
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.groupLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.groupHint {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* flat segmented pill group — transparent pills; active = solid inverse-tone (no shadow) */
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pill {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s var(--ease-standard), background 0.15s var(--ease-standard),
+    border-color 0.15s var(--ease-standard);
+}
+.pill:hover:not(.pillActive) {
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--fg) 32%, transparent);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+}
+.pillActive {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+}
+
+.dialogErr {
+  font-size: 0.85rem;
+  color: #e0483a;
+}
+
+/* footer — running summary on the left, actions on the right; hairline divider */
+.dialogFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: clamp(16px, 3vw, 20px);
+  border-top: 1px solid var(--border-strong);
+}
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.summaryStrong {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+.summaryFaint {
+  font-size: 0.78rem;
+  color: var(--faint);
+}
+.footBtns {
+  flex: none;
+  display: flex;
+  gap: 10px;
+}
+
+@keyframes bc-scrim-in {
+  from {
+    opacity: 0;
   }
-  .cardCol,
-  .gridCol {
-    height: 52vh;
-    min-height: 340px;
+}
+@keyframes bc-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scrim,
+  .dialog {
+    animation: none;
+  }
+}
+
+/* ══ mobile ════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 760px) {
   .fields {
     grid-template-columns: 1fr;
   }
-  .dims {
-    width: 100%;
-    margin-left: 0;
+  .dialogFoot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .footBtns {
+    justify-content: flex-end;
   }
 }

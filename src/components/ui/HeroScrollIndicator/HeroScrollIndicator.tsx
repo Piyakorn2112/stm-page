@@ -10,6 +10,7 @@
  * reduced-motion. Absolutely positioned, so it expects a `position: relative` hero.
  */
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import styles from "./styles.module.css";
 
 const HIDE_AFTER = 60; // px scrolled before the cue fades out
@@ -31,6 +32,7 @@ export default function HeroScrollIndicator({
   variant?: "default" | "blend";
 }) {
   const [hidden, setHidden] = useState(false);
+  const t = useTranslations("common");
 
   useEffect(() => {
     const onScroll = () => setHidden(window.scrollY > HIDE_AFTER);
@@ -44,7 +46,7 @@ export default function HeroScrollIndicator({
       className={`${styles.indicator}${variant === "blend" ? ` ${styles.blend}` : ""}${hidden ? ` ${styles.hidden}` : ""}${className ? ` ${className}` : ""}`}
       aria-hidden="true"
     >
-      <span className={styles.label}>Scroll Down</span>
+      <span className={styles.label}>{t("scrollDown")}</span>
       <span className={styles.line} />
     </span>
   );

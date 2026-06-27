@@ -23,12 +23,13 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { StmRing, randomSeed } from "@stm-ring";
 import StructureGrid, { type StructureGridHandle } from "./StructureGrid";
 import StructureHeroRing from "./StructureHeroRing";
 import { useStructureTheme, type StructureTheme } from "@/utils/structureTheme";
 
-const FONT = "var(--font-sans), system-ui, sans-serif";
+const FONT = "var(--font-sans), var(--font-thai), system-ui, sans-serif";
 
 // Fade the field to the backdrop colour toward the bottom, for the tagline.
 const bottomFade = (to: string) =>
@@ -103,6 +104,7 @@ export default function StructureScene({
   // Assume motion is allowed for SSR/first paint; corrected on mount.
   const [motionOK, setMotionOK] = useState(true);
   const theme = useStructureTheme(); // follows OS prefers-color-scheme
+  const t = useTranslations("home.hero");
 
   const gridRef = useRef<StructureGridHandle>(null);
   const timers = useRef<Set<number>>(new Set()); // every timer (unmount cleanup)
@@ -344,7 +346,7 @@ export default function StructureScene({
             textWrap: "balance",
           }}
         >
-          We build software, products, and ventures.
+          {t("title")}
         </h1>
         <p
           style={{
@@ -358,7 +360,7 @@ export default function StructureScene({
             color: theme.subtext,
           }}
         >
-          A small multidisciplinary team across finance, engineering, AI, and design.
+          {t("subtitle")}
         </p>
       </div>
 

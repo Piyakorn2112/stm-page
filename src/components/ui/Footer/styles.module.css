@@ -46,7 +46,7 @@
   color: var(--muted);
 }
 .footerColHead {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), var(--font-thai-mono);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;

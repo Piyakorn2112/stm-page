@@ -278,7 +278,7 @@
   /* fits on one line within the form on desktop; wraps only if truly too narrow */
 }
 .nameHint {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), var(--font-thai-mono);
   font-size: 0.78rem;
   letter-spacing: 0.01em;
   color: var(--faint);

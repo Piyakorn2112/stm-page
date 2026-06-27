@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import ProductPage from "@/features/product/ProductPage";
 
 export const metadata: Metadata = {
@@ -6,6 +7,8 @@ export const metadata: Metadata = {
   description: "Srang Tech Mai's product, coming soon.",
 };
 
-export default function Page() {
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return <ProductPage />;
 }

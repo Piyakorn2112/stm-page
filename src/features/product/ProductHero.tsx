@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { PALETTE } from "@stm-ring";
 import HeroTwistRing from "@/components/graphic/HeroStructure/HeroTwistRing";
 import HeroScrollIndicator from "@/components/ui/HeroScrollIndicator/HeroScrollIndicator";
@@ -30,6 +31,7 @@ const ringSizeFor = (vw: number, vh: number) =>
   Math.round(Math.max(520, Math.min(Math.max(vw, vh) * 0.96, 1320)));
 
 export default function ProductHero() {
+  const t = useTranslations("product");
   const sectionRef = useRef<HTMLElement>(null);
   const [size, setSize] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -64,7 +66,7 @@ export default function ProductHero() {
     <section
       ref={sectionRef}
       className={`${styles.hero}${entered ? ` ${styles.entered}` : ""}`}
-      aria-label="Our products"
+      aria-label={t("hero.ariaLabel")}
     >
       {/* the ring, centred on a point near the top. Two concentric layers: a bigger,
           fainter back layer counter-rotating under the front layer. */}
@@ -93,15 +95,9 @@ export default function ProductHero() {
       </div>
 
       <h1 className={styles.heroTitle}>
-        Products across{" "}
-        <span className={styles.tagWord}>
-          systems,
-        </span>{" "}
-        and{" "}
-        <span className={styles.tagWord}>
-          everyday
-        </span>{" "}
-        use.
+        {t.rich("hero.title", {
+          accent: (c) => <span className={styles.tagWord}>{c}</span>,
+        })}
       </h1>
 
       <HeroScrollIndicator variant="blend" />

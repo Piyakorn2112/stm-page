@@ -1,0 +1,30 @@
+/* Ambient per-section language link. Sits at the bottom of a section's text; fades in slowly
+   and subtly only while in the reading band, so it reads as "always there". Left-aligned to the
+   section text (centred only where a section centres its block on mobile — handled by the host). */
+.wrap {
+  margin-top: clamp(30px, 4.5vw, 52px);
+  opacity: 0;
+  /* a plain, slow opacity fade — no movement, so it just quietly resolves into place */
+  transition: opacity 820ms var(--ease-standard);
+  pointer-events: none;
+}
+.shown {
+  opacity: 1;
+  pointer-events: auto;
+}
+.link {
+  display: inline-block;
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  /* a touch more subtle at rest; no underline — just brightens to full ink on hover */
+  color: color-mix(in srgb, var(--faint) 78%, transparent);
+  transition: color 220ms var(--ease-standard);
+}
+.link:hover {
+  color: var(--fg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wrap {
+    transition: opacity 300ms linear;
+  }
+}

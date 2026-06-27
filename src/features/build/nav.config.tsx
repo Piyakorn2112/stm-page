@@ -3,7 +3,7 @@
  * section links point back to the home page (`/#anchor`); the current page is "Work";
  * the brand links home.
  */
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { NavConfig } from "@/components/ui/Nav/Nav";
 import styles from "@/features/build/build.module.css";
 

@@ -9,7 +9,9 @@
  */
 
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import CardStage from "./CardStage";
+import { setCardPlaceholder } from "./cardFace";
 import HeroScrollIndicator from "@/components/ui/HeroScrollIndicator/HeroScrollIndicator";
 import styles from "@/features/build/build.module.css";
 
@@ -23,6 +25,9 @@ export default function CardExperience() {
   // id only feeds the ssr:false card, so a lazy random init can't mismatch the DOM
   const [id] = useState(genId);
   const inputRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("work.hero");
+  // localized badge placeholder (canvas-drawn); set before the lazy 3D card first-paints
+  setCardPlaceholder(t("namePlaceholder"));
 
   return (
     <>
@@ -48,13 +53,13 @@ export default function CardExperience() {
             onChange={(e) => setNickname(titleCase(e.target.value.slice(0, 14)))}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            aria-label="Your name on the badge"
+            aria-label={t("nameAria")}
             maxLength={14}
             autoComplete="off"
             autoCapitalize="words"
           />
-          <p className={styles.nameLine}>Every identity in the system is generated, not assigned.</p>
-          <span className={styles.nameHint}>Click the name on the badge to make it yours. Then grab the card and give it a swing.</span>
+          <p className={styles.nameLine}>{t("nameLine")}</p>
+          <span className={styles.nameHint}>{t("nameHint")}</span>
         </form>
 
         <div className={styles.heroFade} aria-hidden="true" />

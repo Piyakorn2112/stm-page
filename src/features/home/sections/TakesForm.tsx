@@ -2,18 +2,21 @@
  * TakesForm — "Where it takes form": a vertical soft-body channel (FlowField) beside the
  * copy; one ring at a time morphs circle → twisted STM form as it flows up the column.
  */
+import { useTranslations } from "next-intl";
 import { Boxes, Fingerprint, Zap } from "lucide-react";
 import FlowField from "@/components/graphic/FlowField/FlowField";
+import LocaleReadLink from "@/components/ui/LocaleReadLink/LocaleReadLink";
 import { accent } from "@/utils/accent";
 import styles from "@/features/home/home.module.css";
 
 const PILLARS = [
-  { Icon: Fingerprint, t: "Identity Systems", d: "Living identities that adapt without losing clarity." },
-  { Icon: Boxes, t: "Product Systems", d: "Tools and platforms designed to evolve, not reset." },
-  { Icon: Zap, t: "Interaction Systems", d: "Behavior-driven interfaces that respond, not just display." },
-];
+  { key: "identity", Icon: Fingerprint },
+  { key: "product", Icon: Boxes },
+  { key: "interaction", Icon: Zap },
+] as const;
 
 export function TakesForm() {
+  const t = useTranslations("home.takesForm");
   return (
     <section id="form" className={"section"} style={accent("var(--blue)")}>
       <div className={`container ${styles.formSplit}`}>
@@ -21,31 +24,26 @@ export function TakesForm() {
           <FlowField className={styles.formFlowCanvas} />
         </div>
         <div className={styles.formText}>
-          <span className={"eyebrow"}>Where it takes form</span>
+          <span className={"eyebrow"}>{t("eyebrow")}</span>
           <h2 className={"heading"}>
-            From structure to <em className={"accentWord"}>reality</em>.
+            {t.rich("heading", {
+              accent: (c) => <em className={"accentWord"}>{c}</em>,
+            })}
           </h2>
-          <p className={"lede"}>
-            What we build is never separate from how we think. Every system begins as
-            structure.
-          </p>
-          <p className={"body"}>
-            Then it&rsquo;s pushed, tested, and refined until it holds under real use: technically
-            and behaviorally, not just visually. We design identities that scale, tools that evolve,
-            and systems that stay coherent as they grow, because what matters isn&rsquo;t
-            making something new, but ensuring it can keep becoming.
-          </p>
+          <p className={"lede"}>{t("lede")}</p>
+          <p className={"body"}>{t("body")}</p>
           <div className={styles.formPillars}>
-            {PILLARS.map(({ Icon, t, d }) => (
-              <div key={t} className={styles.formPillar}>
+            {PILLARS.map(({ Icon, key }) => (
+              <div key={key} className={styles.formPillar}>
                 <Icon className={styles.formPillarIcon} size={20} strokeWidth={2.2} aria-hidden />
                 <div>
-                  <p className={styles.formPillarTitle}>{t}</p>
-                  <p className={styles.formPillarDesc}>{d}</p>
+                  <p className={styles.formPillarTitle}>{t(`pillars.${key}.title`)}</p>
+                  <p className={styles.formPillarDesc}>{t(`pillars.${key}.desc`)}</p>
                 </div>
               </div>
             ))}
           </div>
+          <LocaleReadLink />
         </div>
       </div>
     </section>

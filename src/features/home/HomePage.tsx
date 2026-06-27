@@ -2,6 +2,7 @@
  * HomePage — the home feature composition. Nav + hero (HomeReveal) + the content sections
  * + footer. The route file (app/page.tsx) only renders this.
  */
+import { useTranslations } from "next-intl";
 import Nav from "@/components/ui/Nav/Nav";
 import Footer from "@/components/ui/Footer/Footer";
 import CtaSection from "@/components/ui/CtaSection/CtaSection";
@@ -14,6 +15,7 @@ import { Identity } from "./sections/Identity";
 import { Products } from "./sections/Products";
 
 export default function HomePage() {
+  const t = useTranslations();
   return (
     <>
       <Nav config={homeNavConfig} />
@@ -26,8 +28,9 @@ export default function HomePage() {
           <Products />
         </HomeReveal>
         <CtaSection
-          title="Ready to build something that lasts?"
-          body="Tell us what you're working on. We move fast, think through details, and stay until the thing is right."
+          title={t("home.cta.title")}
+          body={t("home.cta.body")}
+          ctaLabel={t("nav.contact")}
           alt
         />
       </main>

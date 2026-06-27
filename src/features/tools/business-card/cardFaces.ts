@@ -6,10 +6,11 @@
  * Layout follows the reference + annotated spec:
  *   FRONT  white stock · an oversized full-colour ring (the selected seed) bleeding
  *          off all edges · the "srang tech mai" wordmark, large + legible, on top.
- *   BACK   accent stock · the SAME seed as a grey ring in "screen" blend @ 50% · a
- *          same-accent veil @ 40% over the body (mutes the ring under the text) · the
- *          wordmark (top-left) + site (top-right) + name / title / email / tel · a
- *          clipped, seeded bloom-code decoration + the tri-colour mark, bottom-right.
+ *   BACK   accent stock · the SAME seed as a single grey ring in "screen" blend @ 50%
+ *          (same box as the front, so the faces register) · a same-accent veil @ 40% over
+ *          the WHOLE card (mutes the ring under the text) · the wordmark (top-left) + site
+ *          (top-right) + name / title / email / tel · a real QR code (white modules
+ *          straight on the stock, linking to the site), bottom-right.
  *
  * Coordinates are millimetres (viewBox `0 0 90 54`), so the export is dimensionally
  * exact. Note on blend modes: "screen" is honoured natively (CSS/SVG/PDF all support
@@ -17,28 +18,12 @@
  * is composed to MATCH the intended look in standard layers rather than a blend that
  * print can't reproduce.
  */
-import { exportThumbnailSVG, exportSVG, SETTLE_POSE, encodeBloomSVG, MAX_PAYLOAD, PALETTE } from "@stm-ring";
+import { exportThumbnailSVG, exportSVG, SETTLE_POSE, PALETTE } from "@stm-ring";
 import { CARD_MM, accentIndexForSeed, type CardModel } from "./cardModel";
+import { qrCode } from "./qr";
 
-// a seed → a 24-bit Bloom Code payload (deterministic per card; "no meaning" decoration
-// per the brief, but a REAL, scannable bloom code straight from the ring engine)
-const bloomPayload = (seed: string): number => {
-  let h = 2166136261 >>> 0;
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0) % (MAX_PAYLOAD + 1);
-};
-
-// place a square engine SVG (ring / bloom) as a sized, clipped nested viewport
-function placeSquare(svg: string, cx: number, cy: number, size: number): string {
-  const vb = svg.match(/viewBox="([^"]+)"/i)?.[1] ?? "0 0 1000 1000";
-  const inner = svg.replace(/^<svg[^>]*>/i, "").replace(/<\/svg>\s*$/i, "");
-  return `<svg x="${f(cx - size / 2)}" y="${f(cy - size / 2)}" width="${f(size)}" height="${f(
-    size,
-  )}" viewBox="${vb}" preserveAspectRatio="xMidYMid meet">${inner}</svg>`;
-}
+// the card's QR encodes a direct link to the site (fixed → its matrix is computed once)
+const SITE_URL = "https://srangtechmai.tech";
 
 export type WordmarkAsset = { viewBox: string; inner: string };
 export type FaceAssets = { wordmark: WordmarkAsset | null; fontCss?: string | null };
@@ -48,7 +33,7 @@ const H = CARD_MM.h; // 54
 const RING_AR = 176 / 171; // engine viewBox aspect
 const FONT = `'InterCard','Inter','Helvetica Neue',Arial,sans-serif`;
 const RING_SEG = 400; // card-ring detail (well above the 240 thumbnail default)
-const RING_PIECES = 100; // charge-strand count — the "colour circles"
+const RING_PIECES = 160; // charge-strand count — the "colour circles" (denser)
 
 const f = (n: number) => Number(n.toFixed(3));
 const esc = (s: string) =>
@@ -162,29 +147,31 @@ function composeFront(model: CardModel, assets: FaceAssets): string {
 function composeBack(model: CardModel, assets: FaceAssets): string {
   const ai = accentIndexForSeed(model.seed);
   const accent = PALETTE[ai];
+
+  // the SAME seed as a single grey ring, screen-blended @ 50% — EXACT same size + position
+  // as the front ring, so the two faces register. Cached per seed.
   const grey = cachedRing(`g:${model.seed}`, () =>
     exportThumbnailSVG(model.seed, 100, true, RING_SEG, RING_PIECES),
   );
-
-  // grey ring (screen 50%) — EXACT same size + position as the front ring, so the two
-  // faces register (same seed, same pose, same box)
   const rW = 98;
   const rH = rW / RING_AR;
   const rx = W / 2 - rW / 2;
   const ry = H / 2 - rH / 2;
   const greyRing = placeRing(grey, rx, ry, rW, rH, "mix-blend-mode:screen;opacity:0.5");
 
-  // accent veil @ 40% — below the top strip, above the ring, below the text
-  const veil = `<rect x="0" y="11.5" width="${W}" height="${H - 11.5}" fill="${accent}" opacity="0.4"/>`;
+  // accent veil @ 40% — fills the WHOLE card, over the ring field, below the text
+  const veil = `<rect x="0" y="0" width="${W}" height="${H}" fill="${accent}" opacity="0.4"/>`;
 
-  // the real Bloom Code — mono white ink, no colour, no corner flower (just the orbit
-  // field), clipped into the bottom-right corner like a maker's mark
-  const bloom = placeSquare(
-    encodeBloomSVG(bloomPayload(model.seed), { ink: "#ffffff", spark: "#ffffff", flower: false }),
-    83,
-    41,
-    46,
-  );
+  // one consistent safe margin on every edge (≥5mm, ~premium) — the back's layout grid
+  const M = 6.5;
+
+  // a real QR to the site — white modules straight on the accent stock (no container),
+  // bottom-RIGHT, aligned to the same margin as the text (its accent surround = quiet zone).
+  const qr = qrCode(SITE_URL);
+  const Q = 16; // QR footprint (mm)
+  const qx = W - M - Q;
+  const qy = H - M - Q;
+  const qrMark = `<svg x="${f(qx)}" y="${f(qy)}" width="${Q}" height="${Q}" viewBox="0 0 ${qr.count} ${qr.count}" shape-rendering="crispEdges"><path d="${qr.path}" fill="#ffffff"/></svg>`;
 
   // text — wordmark TL, site TR, then name / title / contact, all white
   const t = (
@@ -214,21 +201,25 @@ function composeBack(model: CardModel, assets: FaceAssets): string {
     return t(x, y, size, weight, empty ? ph : value, empty ? base * 0.5 : base, anchor);
   };
 
-  const wm = placeWordmark(assets.wordmark, 6, 5, 3.4, "#ffffff");
+  // header band: brand TL + site TR (both anchored to their margin). Body: name (primary)
+  // / title, then the contact block sitting on the bottom margin. Type scale stays ≥~7pt;
+  // labels are muted so the value out-ranks the label (correct hierarchy).
+  const valueX = M + 9.8; // shared tab-stop for the contact values
+  const wm = placeWordmark(assets.wordmark, M, 5.2, 3.5, "#ffffff");
   const text =
-    field(84, 7.7, 2.3, 500, model.url, "yoursite.com", 0.92, "end") +
-    field(6, 26, 4.1, 650, model.name, "Full Name") +
-    field(6, 30.6, 2.5, 500, model.title, "Your role", 0.85) +
-    t(6, 40.2, 2.3, 700, "Email") +
-    field(15.4, 40.2, 2.3, 400, model.email, "you@email.com", 0.95) +
-    t(6, 44.4, 2.3, 700, "Tel.") +
-    field(15.4, 44.4, 2.3, 400, model.tel, "000 000 0000", 0.95);
+    t(W - M, 8.2, 2.5, 500, "srangtechmai.tech", 0.9, "end") +
+    field(M, 25.6, 4.3, 680, model.name, "Full Name") +
+    field(M, 30.2, 2.8, 500, model.title, "Your role", 0.9) +
+    t(M, 41, 2.6, 500, "Email", 0.55) +
+    field(valueX, 41, 2.6, 450, model.email, "you@email.com", 0.96) +
+    t(M, 45.4, 2.6, 500, "Tel.", 0.55) +
+    field(valueX, 45.4, 2.6, 450, model.tel, "000 000 0000", 0.96);
 
   return (
     `<rect x="0" y="0" width="${W}" height="${H}" fill="${accent}"/>` +
     greyRing +
     veil +
-    bloom +
+    qrMark +
     wm +
     text
   );

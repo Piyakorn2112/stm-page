@@ -1,0 +1,413 @@
+{
+  "common": {
+    "scrollDown": "Scroll Down"
+  },
+  "nav": {
+    "home": "Home",
+    "product": "Product",
+    "showcase": "Showcase",
+    "work": "Work",
+    "contact": "Contact Us",
+    "viewAllProducts": "View all products",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "footer": {
+    "tagline": "Structure for what’s next.",
+    "company": "Company",
+    "about": "About",
+    "philosophy": "Philosophy",
+    "howWeWork": "How We Work",
+    "products": "Products",
+    "viewAll": "View all",
+    "contact": "Contact",
+    "getInTouch": "Get in touch",
+    "rights": "© {year} Srang Tech Mai. Structure for what’s next."
+  },
+  "home": {
+    "hero": {
+      "title": "We build software, products, and ventures.",
+      "subtitle": "A small multidisciplinary team across finance, engineering, AI, and design."
+    },
+    "mission": {
+      "heading": "<creativity>Creativity</creativity>, <engineering>engineering</engineering>, and <intelligence>intelligence</intelligence>; pulled into one system.",
+      "lede": "Not just a software house. A place where design, engineering, and identity are treated as one, held under structure and pressure until they become a single, living identity."
+    },
+    "philosophy": {
+      "eyebrow": "Philosophy",
+      "heading": "Structure for what’s <accent>next</accent>.",
+      "lede": "The ring is the environment in which new ideas land and take shape: foundations strong enough to support many products, many people, and many futures, without losing identity along the way."
+    },
+    "takesForm": {
+      "eyebrow": "Where it takes form",
+      "heading": "From structure to <accent>reality</accent>.",
+      "lede": "What we build is never separate from how we think. Every system begins as structure.",
+      "body": "Then it’s pushed, tested, and refined until it holds under real use: technically and behaviorally, not just visually. We design identities that scale, tools that evolve, and systems that stay coherent as they grow, because what matters isn’t making something new, but ensuring it can keep becoming.",
+      "pillars": {
+        "identity": {
+          "title": "Identity Systems",
+          "desc": "Living identities that adapt without losing clarity."
+        },
+        "product": {
+          "title": "Product Systems",
+          "desc": "Tools and platforms designed to evolve, not reset."
+        },
+        "interaction": {
+          "title": "Interaction Systems",
+          "desc": "Behavior-driven interfaces that respond, not just display."
+        }
+      }
+    },
+    "identity": {
+      "eyebrow": "How we work",
+      "heading": "Systems of people, not <accent>roles</accent>.",
+      "lede": "We don’t organize by rigid roles or departments. Small, high-context teams where design, engineering, and thinking live together, each owning outcomes, not handoffs.",
+      "body": "Every person carries their own generated ring, and works the way the system does: multi-disciplinary, high-agency, aligned but never boxed in.",
+      "link": "How we work"
+    },
+    "products": {
+      "eyebrow": "Products",
+      "heading": "What we’re building.",
+      "lede": "A small, growing set of products. Each one built the same way: structure first, then form.",
+      "viewAll": "View all products",
+      "explore": "Explore {name}",
+      "items": {
+        "members": "A membership system for communities that want real structure. Identity, access, and belonging, in one coherent product.",
+        "cmission": "Mission and task coordination for teams that move fast. Clear ownership, clear outcomes, no lost threads.",
+        "beacon": "A signal layer for teams to find what matters, when it matters. Built for clarity under noise.",
+        "latent-write": "A writing system that thinks in structure, not just words. For ideas that need to hold their shape."
+      }
+    },
+    "cta": {
+      "title": "Ready to build something that lasts?",
+      "body": "Tell us what you’re working on. We move fast, think through details, and stay until the thing is right."
+    }
+  },
+  "contact": {
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Your name",
+      "email": "Email",
+      "emailPlaceholder": "you@company.com",
+      "company": "Company",
+      "companyPlaceholder": "Where you work (optional)",
+      "topic": "What’s this about?",
+      "topicPlaceholder": "Select a topic",
+      "message": "Message",
+      "messagePlaceholder": "Describe what you’re working on, what you need, or what you’d like to explore.",
+      "send": "Send message",
+      "topics": {
+        "product": "Product inquiry",
+        "partnership": "Partnership",
+        "press": "Press",
+        "other": "Something else"
+      },
+      "successTitle": "Message on its way",
+      "successBody": "Thanks — we’ll be in touch shortly."
+    }
+  },
+  "showcase": {
+    "eyebrow": "Showcase",
+    "heading": "A showcase, <accent>in the making</accent>.",
+    "lede": "Selected work, products, and the identities the engine generates will live here. Check back soon."
+  },
+  "work": {
+    "hero": {
+      "nameAria": "Your name on the badge",
+      "nameLine": "Every identity in the system is generated, not assigned.",
+      "nameHint": "Click the name on the badge to make it yours. Then grab the card and give it a swing.",
+      "namePlaceholder": "Enter a name"
+    },
+    "opening": {
+      "eyebrow": "Systems of people",
+      "heading": "Not roles. Not departments. Systems of <accent>people</accent>.",
+      "lede": "We don’t organize work by rigid roles. We build small, high-context teams where design, engineering, and thinking exist together, not in sequence.",
+      "body": "Each team is responsible for outcomes, not handoffs. Ideas don’t wait in queues. They evolve in place."
+    },
+    "operate": {
+      "eyebrow": "How we operate",
+      "heading": "The way we <accent>build</accent>.",
+      "principles": {
+        "multidisciplinary": {
+          "title": "Multi-disciplinary by default",
+          "desc": "Designers code. Engineers design. Not because they have to, but because understanding across fields produces better decisions."
+        },
+        "smallTeams": {
+          "title": "Small, high-performance teams",
+          "desc": "Teams stay small and focused. Less coordination, more clarity, faster iteration."
+        },
+        "outcome": {
+          "title": "Outcome over role",
+          "desc": "We don’t measure contribution by job title. We look at what was built, how well it works, and the thinking behind it."
+        },
+        "ownership": {
+          "title": "Deep ownership",
+          "desc": "If you touch it, you own it. From idea to execution: no passing responsibility."
+        },
+        "craft": {
+          "title": "Craft matters",
+          "desc": "Details are not decoration. They are the difference between something that works and something that lasts."
+        }
+      }
+    },
+    "align": {
+      "eyebrow": "Structure",
+      "heading": "Aligned, not <accent>isolated</accent>.",
+      "lede": "Teams operate independently, but not in isolation.",
+      "body": "Across teams, we maintain shared layers of alignment:",
+      "items": {
+        "design": {
+          "title": "Design syncs",
+          "desc": "Keep visual and interaction quality consistent across teams."
+        },
+        "engineering": {
+          "title": "Engineering syncs",
+          "desc": "Align architecture and standards so the parts still fit."
+        },
+        "system": {
+          "title": "System-level discussions",
+          "desc": "Evolve the whole, not just the parts."
+        }
+      },
+      "diagram": {
+        "design": "Design",
+        "engineering": "Engineering",
+        "system": "System"
+      },
+      "diagramAria": "Three independent team pillars connected by shared horizontal alignment layers",
+      "closing": "This keeps the system coherent, without slowing down individual teams."
+    },
+    "fit": {
+      "eyebrow": "The fit",
+      "heading": "Who <accent>thrives</accent> here.",
+      "fitsHead": "You’ll feel at home here if…",
+      "notFitsHead": "This might not be for you if…",
+      "fits": {
+        "acrossDisciplines": "You think across disciplines, not inside one",
+        "lookAndWork": "You care about both how things look and how they work",
+        "ownership": "You prefer ownership over instruction",
+        "figureOut": "You’re comfortable figuring things out, not waiting for direction",
+        "refine": "You enjoy refining details, not just finishing tasks"
+      },
+      "notFits": {
+        "definedRoles": "You prefer clearly defined roles and boundaries",
+        "stepByStep": "You rely on step-by-step direction to move forward",
+        "separateWork": "You separate “design work” and “engineering work” strictly",
+        "speedOverQuality": "You optimize for speed over quality and thought"
+      }
+    },
+    "closing": {
+      "eyebrow": "Not yet hiring",
+      "heading": "We’re not hiring yet. But we’re <accent>building</accent>.",
+      "lede": "We’re still shaping the system. If this way of working resonates with you, you’ll likely find your way here when the time is right."
+    }
+  },
+  "product": {
+    "hero": {
+      "ariaLabel": "Our products",
+      "title": "Products across <accent>systems,</accent> and <accent>everyday</accent> use."
+    },
+    "cta": {
+      "title": "Interested in our products?",
+      "body": "Reach out to learn about availability, how a product fits your team, or to start a conversation about what you’re building."
+    },
+    "sections": {
+      "visit": "Visit {name}",
+      "comingSoon": "Website coming soon",
+      "members": {
+        "eyebrow": "Loyalty platform",
+        "tagline": "A loyalty system each business runs as its own.",
+        "body": [
+          "Most loyalty solutions force a trade-off. Off-the-shelf tools look identical and bend awkwardly around how rewards actually work. Custom builds fit better, but take months and turn small changes into ongoing work. In both cases, the business adapts to the tool instead of the other way around.",
+          "This platform gives each business its own loyalty app, opened directly inside LINE — no download, no friction. Branding and operation live in one place. You define how it looks, publish changes instantly, and run the program day to day without relying on developers. The system stays consistent as it evolves, rather than drifting over time."
+        ],
+        "capabilities": [
+          {
+            "title": "Brand it yourself",
+            "detail": "Define colors, styling, and card design with a live preview."
+          },
+          {
+            "title": "Run everything in one place",
+            "detail": "Points, rewards, missions, and member activity."
+          },
+          {
+            "title": "Lives where customers already are",
+            "detail": "Opens inside LINE — nothing to install."
+          },
+          {
+            "title": "Built for operation",
+            "detail": "Managed day to day, not treated as a project."
+          }
+        ]
+      },
+      "cmission": {
+        "eyebrow": "Mission & task coordination",
+        "tagline": "Mission and task coordination for teams that move fast.",
+        "body": [
+          "Cmission treats a team’s work as a set of missions with a clear owner and a clear outcome, not an open-ended backlog. Tasks exist inside that mission’s context instead of floating free, so it’s always clear why a piece of work exists and what finishing it actually changes. Decisions and updates stay attached to the work they belong to, so nothing important gets lost in a separate chat history once a mission starts moving fast."
+        ],
+        "capabilities": [
+          {
+            "title": "Missions, not backlogs",
+            "detail": "Tasks live nested inside the mission they serve."
+          },
+          {
+            "title": "One clear owner",
+            "detail": "Always visible on every mission, never ambiguous."
+          },
+          {
+            "title": "Context stays put",
+            "detail": "Decisions and updates attach to the work, not a side chat."
+          },
+          {
+            "title": "Built for speed",
+            "detail": "For fast-moving teams, not heavyweight process."
+          }
+        ]
+      },
+      "beacon": {
+        "eyebrow": "Signal layer",
+        "tagline": "A signal layer for teams to find what matters, when it matters.",
+        "body": [
+          "Every team channel eventually drowns in the same noise: updates, mentions, and alerts competing for attention with no way to tell which ones actually matter right now. Beacon sits above those channels as a signal layer, surfacing what needs a person’s attention and quietly holding back what doesn’t, instead of forwarding every notification at full volume. The goal isn’t fewer messages, it’s the right ones arriving with the right weight, so urgency stops being something a person has to guess at."
+        ],
+        "capabilities": [
+          {
+            "title": "Signal over noise",
+            "detail": "Scored across every connected channel."
+          },
+          {
+            "title": "Surfaces what matters",
+            "detail": "Priority rises automatically — no manual triage."
+          },
+          {
+            "title": "Quiet by default",
+            "detail": "Loud only when something genuinely needs you."
+          },
+          {
+            "title": "Sits above your tools",
+            "detail": "A layer over what you already use, not a replacement."
+          }
+        ]
+      },
+      "latent-write": {
+        "eyebrow": "Writing system",
+        "tagline": "A writing system that thinks in structure, not just words.",
+        "body": [
+          "Most writing tools treat a document as a flat sequence of words, which is fine until an idea gets complicated enough to need real structure underneath it. Latent Write keeps the structure of an argument alongside the prose itself, so a long or technical piece of writing can be reorganised, checked for gaps, and built on without that structure quietly drifting out of sync with the words. Ideas that need to hold their shape over many drafts get to keep it."
+        ],
+        "capabilities": [
+          {
+            "title": "Structure with the prose",
+            "detail": "Tracked together, not structured then forgotten."
+          },
+          {
+            "title": "Reorganise freely",
+            "detail": "Move an argument without losing the words."
+          },
+          {
+            "title": "Made for long-form",
+            "detail": "Technical, sustained writing — not quick notes."
+          },
+          {
+            "title": "Catch gaps early",
+            "detail": "Inconsistencies surface as you write, not after."
+          }
+        ]
+      }
+    }
+  },
+  "tools": {
+    "eyebrow": "Tools",
+    "heading": "Generative tools",
+    "lede": "Small studio utilities built on the STM ring engine.",
+    "items": {
+      "businessCard": {
+        "name": "Business card",
+        "desc": "Pick a ring, make it yours, spin it in 3D, and export a print-ready card."
+      }
+    }
+  },
+  "businessCard": {
+    "hero": {
+      "ariaLabel": "Your business card",
+      "eyebrow": "Business card",
+      "title": "Make it <accent>yours</accent>."
+    },
+    "form": {
+      "eyebrow": "Your details",
+      "title": "Make it your own",
+      "sub": "Your name and contacts print on the back — the site and QR are already built in.",
+      "fields": {
+        "name": {
+          "label": "Name",
+          "placeholder": "Full name"
+        },
+        "title": {
+          "label": "Role",
+          "placeholder": "Your role"
+        },
+        "tel": {
+          "label": "Phone",
+          "placeholder": "000 000 0000"
+        },
+        "email": {
+          "label": "Email",
+          "placeholder": "you@email.com"
+        }
+      },
+      "export": "Export",
+      "caption": "PDF · PNG · JPG · SVG — single card or print-ready sheet"
+    },
+    "export": {
+      "eyebrow": "Export",
+      "title": "Download your card",
+      "close": "Close",
+      "groups": {
+        "format": "Format",
+        "sides": "Sides",
+        "output": "Output",
+        "resolution": "Resolution"
+      },
+      "aria": {
+        "format": "File format",
+        "sides": "Which sides",
+        "output": "Output layout",
+        "sheet": "Sheet size",
+        "resolution": "Resolution"
+      },
+      "sides": {
+        "both": "Both",
+        "front": "Front",
+        "back": "Back"
+      },
+      "layouts": {
+        "trim": {
+          "label": "Trimmed",
+          "hint": "The bare card at 90 × 54 mm — for web, email, preview."
+        },
+        "bleed": {
+          "label": "Bleed + marks",
+          "hint": "One card with 3 mm bleed and corner crop marks — hand to a printer."
+        },
+        "sheet": {
+          "label": "Print sheet",
+          "hint": "Cards imposed on a press sheet with cut marks — give the file to a copy shop."
+        }
+      },
+      "faceAlt": "{side} of the card",
+      "summary": {
+        "oneFile": "1 file",
+        "svgBoth": "both faces · 1 file",
+        "rasterBoth": "2 files · front + back",
+        "pages": "{count, plural, one {# page} other {# pages}}",
+        "sheets": "{count, plural, one {# sheet} other {# sheets}}",
+        "cardsPerSheet": "{count, plural, one {# card per sheet} other {# cards per sheet}}",
+        "bleedMarks": "bleed, crop marks"
+      },
+      "error": "Export failed — please try again.",
+      "cancel": "Cancel",
+      "export": "Export"
+    }
+  }
+}

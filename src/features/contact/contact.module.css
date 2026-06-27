@@ -46,7 +46,7 @@
 }
 
 .email {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), var(--font-thai-mono);
   font-size: clamp(1rem, 1.6vw, 1.2rem);
   letter-spacing: 0.01em;
   color: var(--fg);
@@ -55,7 +55,7 @@
 .email:hover { color: var(--muted); }
 
 .phone {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), var(--font-thai-mono);
   font-size: clamp(0.85rem, 1.25vw, 1rem);
   letter-spacing: 0.03em;
   color: var(--faint);
@@ -65,6 +65,11 @@
 
 /* paper sits below the contact block but pulled UP so its top peeks into the hero
    (the user scrolls a little to reveal the full form) */
+.localeRow {
+  display: flex;
+  justify-content: center;
+  padding-inline: var(--gutter);
+}
 .paperStage {
   position: relative;
   z-index: 2;
@@ -344,7 +349,8 @@
   background: var(--paper);
   border: 1px solid var(--paper-border);
   border-radius: 18px;
-  padding: clamp(88px, 17%, 104px) clamp(26px, 8%, 38px) clamp(32px, 9%, 44px);
+  /* side padding matches the stamp's `left` exactly so the fields line up under it */
+  padding: clamp(88px, 17%, 104px) clamp(20px, 6%, 28px) clamp(32px, 9%, 44px);
 }
 .form {
   display: flex;
@@ -443,8 +449,8 @@ textarea.input { resize: vertical; min-height: 116px; }
 .selectOption:hover { background: color-mix(in srgb, var(--fg) 6%, transparent); }
 .selectOptionSelected { color: var(--indigo); font-weight: 500; }
 
-/* send button — solid pill (nav-CTA identity) with a paper-plane lucide mark; a soft resting
-   shadow lifts it off the paper (crafted), hover lightens per the site convention. */
+/* send button — solid pill (nav-CTA identity) with a paper-plane lucide mark; flat (no
+   drop shadow), hover lightens per the site convention. */
 .sendBtn {
   align-self: flex-start;
   display: inline-flex;
@@ -461,12 +467,10 @@ textarea.input { resize: vertical; min-height: 116px; }
   border: none;
   cursor: pointer;
   margin-top: clamp(6px, 1.5vw, 12px);
-  box-shadow: 0 2px 10px -2px color-mix(in srgb, var(--fg) 26%, transparent);
-  transition: opacity 200ms var(--ease-standard), box-shadow 200ms var(--ease-standard);
+  transition: opacity 200ms var(--ease-standard);
 }
 .sendBtn:hover {
   opacity: 0.82;
-  box-shadow: 0 4px 15px -3px color-mix(in srgb, var(--fg) 32%, transparent);
 }
 
 /* ── success state (sibling of the flying mailer) ───────────────────────────────── */
