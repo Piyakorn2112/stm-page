@@ -12,6 +12,7 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@react-three/rapier": "^2.2.0",
+    "@swc/helpers": "0.5.23",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.21.0",
     "meshline": "^3.3.1",
@@ -36,6 +37,8 @@
     "typescript": "^5"
   },
   "overrides": {
-    "@swc/helpers": "0.5.23"
+    "next": {
+      "@swc/helpers": "0.5.15"
+    }
   }
 }
