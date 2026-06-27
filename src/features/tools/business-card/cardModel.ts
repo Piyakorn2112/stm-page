@@ -22,18 +22,17 @@ export type CardModel = {
   title: string;
   email: string;
   tel: string;
-  url: string; // the small site label on the back, top-right
 };
 
 /** Ships as a blank template — empty fields render the generic placeholders on the
- *  card (and the inputs show their prompts); only the default ring seed is set. */
+ *  card (and the inputs show their prompts); only the default ring seed is set. The
+ *  site URL is FIXED (srangtechmai.tech), not an editable field. */
 export const DEFAULT_MODEL: CardModel = {
   seed: "srang-tech-mai",
   name: "",
   title: "",
   email: "",
   tel: "",
-  url: "",
 };
 
 /* ── accent derivation ────────────────────────────────────────────────────────── */

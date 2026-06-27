@@ -21,24 +21,26 @@
  * grid presents each as a considered feature card rather than a list item.
  */
 import type { CSSProperties } from "react";
+import { useTranslations } from "next-intl";
 import DualToneLogo from "@/components/ui/DualToneLogo/DualToneLogo";
 import SectionLink from "@/components/ui/SectionLink/SectionLink";
+import LocaleReadLink from "@/components/ui/LocaleReadLink/LocaleReadLink";
 import styles from "./product.module.css";
 
 const rawColor = (v: string) => ({ ["--p-raw"]: v } as CSSProperties);
 
-type Capability = { title: string; detail: string };
 type ProductSection = {
   slug: string;
   logo: string;
   /** the logo's viewBox aspect (w/h) — drives equal-optical-area sizing + flush-left fit */
   aspect: number;
+  /** product NAME — stays Latin (brand name), not localized */
   label: string;
   color: string;
-  eyebrow: string;
-  tagline: string;
-  body: readonly string[];
-  capabilities: readonly Capability[];
+  /** number of body paragraphs (copy lives in the `product` message namespace) */
+  paras: number;
+  /** number of capability cards (copy lives in the `product` message namespace) */
+  caps: number;
   /** the product's own external site — when set, the section shows a "Visit <product> ↗"
    *  outbound link; until then a muted "coming soon" stands in. */
   url?: string;
@@ -51,18 +53,8 @@ const PRODUCT_SECTIONS: readonly ProductSection[] = [
     aspect: 611 / 125,
     label: "Members",
     color: "#5057FF",
-    eyebrow: "Loyalty platform",
-    tagline: "A loyalty system each business runs as its own.",
-    body: [
-      "Most loyalty solutions force a trade-off. Off-the-shelf tools look identical and bend awkwardly around how rewards actually work. Custom builds fit better, but take months and turn small changes into ongoing work. In both cases, the business adapts to the tool instead of the other way around.",
-      "This platform gives each business its own loyalty app, opened directly inside LINE — no download, no friction. Branding and operation live in one place. You define how it looks, publish changes instantly, and run the program day to day without relying on developers. The system stays consistent as it evolves, rather than drifting over time.",
-    ],
-    capabilities: [
-      { title: "Brand it yourself", detail: "Define colors, styling, and card design with a live preview." },
-      { title: "Run everything in one place", detail: "Points, rewards, missions, and member activity." },
-      { title: "Lives where customers already are", detail: "Opens inside LINE — nothing to install." },
-      { title: "Built for operation", detail: "Managed day to day, not treated as a project." },
-    ],
+    paras: 2,
+    caps: 4,
   },
   {
     slug: "cmission",
@@ -70,17 +62,8 @@ const PRODUCT_SECTIONS: readonly ProductSection[] = [
     aspect: 682 / 67,
     label: "Cmission",
     color: "#FF343B",
-    eyebrow: "Mission & task coordination",
-    tagline: "Mission and task coordination for teams that move fast.",
-    body: [
-      "Cmission treats a team's work as a set of missions with a clear owner and a clear outcome, not an open-ended backlog. Tasks exist inside that mission's context instead of floating free, so it's always clear why a piece of work exists and what finishing it actually changes. Decisions and updates stay attached to the work they belong to, so nothing important gets lost in a separate chat history once a mission starts moving fast.",
-    ],
-    capabilities: [
-      { title: "Missions, not backlogs", detail: "Tasks live nested inside the mission they serve." },
-      { title: "One clear owner", detail: "Always visible on every mission, never ambiguous." },
-      { title: "Context stays put", detail: "Decisions and updates attach to the work, not a side chat." },
-      { title: "Built for speed", detail: "For fast-moving teams, not heavyweight process." },
-    ],
+    paras: 1,
+    caps: 4,
   },
   {
     slug: "beacon",
@@ -88,17 +71,8 @@ const PRODUCT_SECTIONS: readonly ProductSection[] = [
     aspect: 881 / 222,
     label: "Beacon",
     color: "#FF6592",
-    eyebrow: "Signal layer",
-    tagline: "A signal layer for teams to find what matters, when it matters.",
-    body: [
-      "Every team channel eventually drowns in the same noise: updates, mentions, and alerts competing for attention with no way to tell which ones actually matter right now. Beacon sits above those channels as a signal layer, surfacing what needs a person's attention and quietly holding back what doesn't, instead of forwarding every notification at full volume. The goal isn't fewer messages, it's the right ones arriving with the right weight, so urgency stops being something a person has to guess at.",
-    ],
-    capabilities: [
-      { title: "Signal over noise", detail: "Scored across every connected channel." },
-      { title: "Surfaces what matters", detail: "Priority rises automatically — no manual triage." },
-      { title: "Quiet by default", detail: "Loud only when something genuinely needs you." },
-      { title: "Sits above your tools", detail: "A layer over what you already use, not a replacement." },
-    ],
+    paras: 1,
+    caps: 4,
   },
   {
     slug: "latent-write",
@@ -106,21 +80,13 @@ const PRODUCT_SECTIONS: readonly ProductSection[] = [
     aspect: 798 / 74,
     label: "Latent Write",
     color: "#73ADFF",
-    eyebrow: "Writing system",
-    tagline: "A writing system that thinks in structure, not just words.",
-    body: [
-      "Most writing tools treat a document as a flat sequence of words, which is fine until an idea gets complicated enough to need real structure underneath it. Latent Write keeps the structure of an argument alongside the prose itself, so a long or technical piece of writing can be reorganised, checked for gaps, and built on without that structure quietly drifting out of sync with the words. Ideas that need to hold their shape over many drafts get to keep it.",
-    ],
-    capabilities: [
-      { title: "Structure with the prose", detail: "Tracked together, not structured then forgotten." },
-      { title: "Reorganise freely", detail: "Move an argument without losing the words." },
-      { title: "Made for long-form", detail: "Technical, sustained writing — not quick notes." },
-      { title: "Catch gaps early", detail: "Inconsistencies surface as you write, not after." },
-    ],
+    paras: 1,
+    caps: 4,
   },
 ];
 
 export default function ProductSections() {
+  const t = useTranslations("product");
   return (
     <>
       {PRODUCT_SECTIONS.map((p, i) => {
@@ -138,24 +104,24 @@ export default function ProductSections() {
             style={rawColor(p.color)}
           >
             <div className="container">
-              <span className="eyebrow">{p.eyebrow}</span>
+              <span className="eyebrow">{t(`sections.${p.slug}.eyebrow`)}</span>
               <h2 className={styles.productLogo} style={logoStyle}>
                 <DualToneLogo src={p.logo} label={p.label} className={styles.productLogoSvg} />
               </h2>
-              <p className={styles.productTagline}>{p.tagline}</p>
+              <p className={styles.productTagline}>{t(`sections.${p.slug}.tagline`)}</p>
 
               {/* prose + capability grid: stacked by default, side-by-side on wide desktop */}
               <div className={styles.productDetail}>
                 <div className={styles.productBody}>
-                  {p.body.map((para, j) => (
-                    <p key={j}>{para}</p>
+                  {Array.from({ length: p.paras }, (_, j) => (
+                    <p key={j}>{t(`sections.${p.slug}.body.${j}`)}</p>
                   ))}
                 </div>
                 <ul className={styles.productGrid}>
-                  {p.capabilities.map((c) => (
-                    <li key={c.title}>
-                      <h3 className={styles.cardTitle}>{c.title}</h3>
-                      <p className={styles.cardDetail}>{c.detail}</p>
+                  {Array.from({ length: p.caps }, (_, j) => (
+                    <li key={j}>
+                      <h3 className={styles.cardTitle}>{t(`sections.${p.slug}.capabilities.${j}.title`)}</h3>
+                      <p className={styles.cardDetail}>{t(`sections.${p.slug}.capabilities.${j}.detail`)}</p>
                     </li>
                   ))}
                 </ul>
@@ -164,12 +130,13 @@ export default function ProductSections() {
               {p.url ? (
                 <div className={styles.productCta}>
                   <SectionLink href={p.url} external>
-                    Visit {p.label}
+                    {t("sections.visit", { name: p.label })}
                   </SectionLink>
                 </div>
               ) : (
-                <p className={styles.productStatus}>Website coming soon</p>
+                <p className={styles.productStatus}>{t("sections.comingSoon")}</p>
               )}
+              <LocaleReadLink />
             </div>
           </section>
         );

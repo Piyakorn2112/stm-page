@@ -3,15 +3,17 @@
  * and content stay separate. Uses the site primitives stylesheet. A faint, greyscale,
  * worker-driven ring matrix (FooterMatrix) sits behind the content as the backdrop.
  *
- * Anchor links use absolute paths (/#anchor) so they work correctly from any page, not
- * just the home page.
+ * Links use the locale-aware next-intl Link so the active locale (/, /th) is preserved,
+ * and absolute paths (/#anchor) so anchors work correctly from any page.
  */
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import FooterMatrix from "@/components/graphic/FooterMatrix/FooterMatrix";
 import StmLogo from "@/components/graphic/StmLogo/StmLogo";
 import styles from "./styles.module.css";
 
 export default function Footer() {
+  const t = useTranslations("footer");
   return (
     <footer className={styles.footer}>
       <FooterMatrix className={styles.matrix} />
@@ -20,31 +22,33 @@ export default function Footer() {
           <Link className={styles.footerBrand} href="/" aria-label="Srang Tech Mai, home">
             <StmLogo width={300} />
           </Link>
-          <p className={styles.footerTag}>Structure for what&rsquo;s next.</p>
+          <p className={styles.footerTag}>{t("tagline")}</p>
         </div>
         <div className={styles.footerCols}>
           <div className={styles.footerCol}>
-            <span className={styles.footerColHead}>Company</span>
-            <Link href="/#about">About</Link>
-            <Link href="/#philosophy">Philosophy</Link>
-            <Link href="/work">How We Work</Link>
+            <span className={styles.footerColHead}>{t("company")}</span>
+            <Link href="/#about">{t("about")}</Link>
+            <Link href="/#philosophy">{t("philosophy")}</Link>
+            <Link href="/work">{t("howWeWork")}</Link>
           </div>
           <div className={styles.footerCol}>
-            <span className={styles.footerColHead}>Products</span>
+            <span className={styles.footerColHead}>{t("products")}</span>
             <Link href="/product#members">Members</Link>
             <Link href="/product#cmission">Cmission</Link>
             <Link href="/product#beacon">Beacon</Link>
             <Link href="/product#latent-write">Latent Write</Link>
-            <Link href="/product">View all</Link>
+            <Link href="/product">{t("viewAll")}</Link>
           </div>
           <div className={styles.footerCol}>
-            <span className={styles.footerColHead}>Contact</span>
-            <Link href="/contact">Get in touch</Link>
+            <span className={styles.footerColHead}>{t("contact")}</span>
+            <Link href="/contact">{t("getInTouch")}</Link>
           </div>
         </div>
       </div>
       <div className={`container ${styles.footerBottom}`}>
-        <p className={styles.footerNote}>© {new Date().getFullYear()} Srang Tech Mai. Structure for what&rsquo;s next.</p>
+        <p className={styles.footerNote}>
+          {t("rights", { year: String(new Date().getFullYear()) })}
+        </p>
       </div>
     </footer>
   );

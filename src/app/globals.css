@@ -90,7 +90,10 @@ body {
   min-height: 100%;
   color: var(--fg);
   background: var(--bg);
-  font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  /* Inter (Latin) → Prompt (Thai fallback). Inter has no Thai glyphs, so Thai falls
+     through to Prompt while English words stay Inter — on every locale. */
+  font-family: var(--font-sans), var(--font-thai), system-ui, -apple-system, "Segoe UI", Arial,
+    sans-serif;
   font-feature-settings: "cv05" 1, "ss03" 1; /* Inter: friendlier l, single-storey */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -201,4 +204,21 @@ a {
     text-align: left;
     margin-inline: 0;
   }
+}
+
+/* ─── Thai locale typography ─────────────────────────────────────────────────
+   Thai (Prompt) stacks vowels + tone marks above/below the baseline, so it reads
+   better with a little more leading than the tight Latin display values. Scoped to
+   :lang(th) so English layout is untouched. */
+html[lang="th"] body {
+  line-height: 1.65;
+}
+html[lang="th"] .heading {
+  line-height: 1.18;
+}
+html[lang="th"] .lede {
+  line-height: 1.7;
+}
+html[lang="th"] .body {
+  line-height: 1.8;
 }

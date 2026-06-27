@@ -16,7 +16,9 @@
  */
 
 import { useState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Asterisk, ChevronDown, Send } from "lucide-react";
+import LocaleReadLink from "@/components/ui/LocaleReadLink/LocaleReadLink";
 import styles from "./contact.module.css";
 
 /* ── custom select (brand-indigo focus, lucide chevron, custom dropdown) ───────────── */
@@ -159,17 +161,14 @@ function EnvelopeMark() {
   );
 }
 
-const TOPICS = [
-  { value: "product", label: "Product inquiry" },
-  { value: "partnership", label: "Partnership" },
-  { value: "press", label: "Press" },
-  { value: "other", label: "Something else" },
-];
+const TOPIC_VALUES = ["product", "partnership", "press", "other"] as const;
 
 export default function ContactForm() {
   const [topic, setTopic] = useState("");
   const [sent, setSent] = useState(false);
   const flag = sent ? "1" : "0";
+  const t = useTranslations("contact.form");
+  const topicOptions = TOPIC_VALUES.map((v) => ({ value: v, label: t(`topics.${v}`) }));
 
   return (
     <section className={styles.hero}>
@@ -241,33 +240,33 @@ export default function ContactForm() {
               >
                 <div className={styles.fieldRow}>
                   <div className={styles.field}>
-                    <label className={styles.label} htmlFor="cf-name">Name</label>
-                    <input className={styles.input} id="cf-name" type="text" placeholder="Your name" required autoComplete="name" />
+                    <label className={styles.label} htmlFor="cf-name">{t("name")}</label>
+                    <input className={styles.input} id="cf-name" type="text" placeholder={t("namePlaceholder")} required autoComplete="name" />
                   </div>
                   <div className={styles.field}>
-                    <label className={styles.label} htmlFor="cf-email">Email</label>
-                    <input className={styles.input} id="cf-email" type="email" placeholder="you@company.com" required autoComplete="email" />
+                    <label className={styles.label} htmlFor="cf-email">{t("email")}</label>
+                    <input className={styles.input} id="cf-email" type="email" placeholder={t("emailPlaceholder")} required autoComplete="email" />
                   </div>
                 </div>
 
                 <div className={styles.fieldRow}>
                   <div className={styles.field}>
-                    <label className={styles.label} htmlFor="cf-company">Company</label>
-                    <input className={styles.input} id="cf-company" type="text" placeholder="Where you work (optional)" autoComplete="organization" />
+                    <label className={styles.label} htmlFor="cf-company">{t("company")}</label>
+                    <input className={styles.input} id="cf-company" type="text" placeholder={t("companyPlaceholder")} autoComplete="organization" />
                   </div>
                   <div className={styles.field}>
-                    <label className={styles.label} htmlFor="cf-topic">What&rsquo;s this about?</label>
-                    <CustomSelect id="cf-topic" value={topic} onChange={setTopic} options={TOPICS} placeholder="Select a topic" />
+                    <label className={styles.label} htmlFor="cf-topic">{t("topic")}</label>
+                    <CustomSelect id="cf-topic" value={topic} onChange={setTopic} options={topicOptions} placeholder={t("topicPlaceholder")} />
                   </div>
                 </div>
 
                 <div className={styles.field}>
-                  <label className={styles.label} htmlFor="cf-message">Message</label>
-                  <textarea className={styles.input} id="cf-message" placeholder="Describe what you're working on, what you need, or what you'd like to explore." rows={5} required />
+                  <label className={styles.label} htmlFor="cf-message">{t("message")}</label>
+                  <textarea className={styles.input} id="cf-message" placeholder={t("messagePlaceholder")} rows={5} required />
                 </div>
 
                 <button type="submit" className={styles.sendBtn} aria-busy={sent}>
-                  Send message
+                  {t("send")}
                   <Send size={16} strokeWidth={2.2} aria-hidden />
                 </button>
               </form>
@@ -282,12 +281,15 @@ export default function ContactForm() {
                 <span className={styles.successMark}>
                   <Asterisk size={26} strokeWidth={2} aria-hidden />
                 </span>
-                <h2 className={styles.successTitle}>Message on its way</h2>
-                <p className={styles.successSub}>Thanks — we&rsquo;ll be in touch shortly.</p>
+                <h2 className={styles.successTitle}>{t("successTitle")}</h2>
+                <p className={styles.successSub}>{t("successBody")}</p>
               </>
             )}
           </div>
         </div>
+      </div>
+      <div className={styles.localeRow}>
+        <LocaleReadLink />
       </div>
     </section>
   );

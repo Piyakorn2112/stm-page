@@ -4,17 +4,19 @@
  * cross-page `/#anchor` links — see each feature's nav.config). Each item carries a
  * lucide icon; the stroke is kept light to match the nav's regular-weight text.
  */
-import { Asterisk, Box, Home, IdCardLanyard, type LucideIcon } from "lucide-react";
+import { Asterisk, Box, Home, IdCardLanyard, LayoutGrid, type LucideIcon } from "lucide-react";
 
 // `cta` items render as a tight pill button (the primary action) instead of a text link;
-// they carry no hover-reveal icon, so `Icon` is optional.
-export type NavItem = { anchor?: string; route?: string; label: string; Icon?: LucideIcon; cta?: boolean; mega?: boolean };
+// they carry no hover-reveal icon, so `Icon` is optional. `labelKey` is the i18n key under
+// the `nav` namespace (the visible label is resolved at render via next-intl).
+export type NavItem = { anchor?: string; route?: string; labelKey: string; Icon?: LucideIcon; cta?: boolean; mega?: boolean };
 
 export const NAV_ITEMS: NavItem[] = [
-  { route: "/", label: "Home", Icon: Home },
-  { route: "/product", label: "Product", Icon: Box, mega: true },
-  { route: "/work", label: "Work", Icon: IdCardLanyard },
-  { route: "/contact", label: "Contact Us", Icon: Asterisk, cta: true },
+  { route: "/", labelKey: "home", Icon: Home },
+  { route: "/product", labelKey: "product", Icon: Box, mega: true },
+  { route: "/showcase", labelKey: "showcase", Icon: LayoutGrid },
+  { route: "/work", labelKey: "work", Icon: IdCardLanyard },
+  { route: "/contact", labelKey: "contact", Icon: Asterisk, cta: true },
 ];
 
 export const NAV_ICON_SIZE = 16;

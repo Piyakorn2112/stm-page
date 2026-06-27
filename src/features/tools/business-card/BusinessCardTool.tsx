@@ -1,23 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  DEFAULT_MODEL,
-  accentHexForSeed,
-  accentNameForSeed,
-  type CardModel,
-} from "./cardModel";
+import { useTranslations } from "next-intl";
+import { DEFAULT_MODEL, accentHexForSeed, type CardModel } from "./cardModel";
 import { buildFaces } from "./cardFaces";
-import { downloadSVG, downloadPDF } from "./cardExport";
+import { DEFAULT_SPEC, type ExportSpec } from "./cardExport";
 import { useWordmark } from "./useWordmark";
 import { useEmbeddedFont } from "./useEmbeddedFont";
+import { accent } from "@/utils/accent";
 import EditPanel from "./EditPanel";
+import ExportDialog from "./ExportDialog";
 import BusinessCard3D from "@/components/graphic/BusinessCard3D/BusinessCard3D";
 import RingGrid from "@/components/graphic/RingGrid/RingGrid";
+import HeroScrollIndicator from "@/components/ui/HeroScrollIndicator/HeroScrollIndicator";
 import styles from "./businessCard.module.css";
 
-// deterministic seed per grid lattice cell → an effectively infinite field of rings
-const seedFor = (col: number, row: number) => `bc${col},${row}`;
+// the ring picker is an infinite honeycomb; col 0 rests on the branded default ring
+const seedFor = (col: number, row: number) =>
+  col === 0 && row === 0 ? "srang-tech-mai" : `bc${col},${row}`;
 
 function useDebounced<T>(value: T, ms: number): T {
   const [v, setV] = useState(value);
@@ -29,13 +29,15 @@ function useDebounced<T>(value: T, ms: number): T {
 }
 
 export default function BusinessCardTool() {
+  const t = useTranslations("businessCard.hero");
   const [model, setModel] = useState<CardModel>(DEFAULT_MODEL);
-  const [busy, setBusy] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportSpec, setExportSpec] = useState<ExportSpec>(DEFAULT_SPEC);
   const wordmark = useWordmark();
   const fontCss = useEmbeddedFont();
   const assets = useMemo(() => ({ wordmark, fontCss }), [wordmark, fontCss]);
 
-  // the 3D texture rebuild rasterises the high-res rings; debounce so typing stays smooth
+  // the 3D texture rebuild rasterises the high-res rings; debounce so picking stays smooth
   const debouncedModel = useDebounced(model, 160);
   const faces = useMemo(() => buildFaces(debouncedModel, assets), [debouncedModel, assets]);
 
@@ -44,51 +46,57 @@ export default function BusinessCardTool() {
     (key: keyof CardModel, value: string) => setModel((m) => ({ ...m, [key]: value })),
     [],
   );
-  const exportSvg = useCallback(() => downloadSVG(model, assets), [model, assets]);
-  const exportPdf = useCallback(async () => {
-    setBusy(true);
-    try {
-      await downloadPDF(model, assets);
-    } finally {
-      setBusy(false);
-    }
-  }, [model, assets]);
+  const openExport = useCallback(() => setExportOpen(true), []);
+  const closeExport = useCallback(() => setExportOpen(false), []);
+
+  // the chosen ring's brand colour — threaded through the whole page as the live --accent
+  const accentHex = accentHexForSeed(model.seed);
 
   return (
-    <div className={styles.tool}>
-      <header className={styles.head}>
-        <span className="eyebrow">Tools / Business card</span>
-        <h1 className={styles.title}>Make it yours</h1>
-        <p className={styles.sub}>
-          Browse the rings and pick one to anchor your card&rsquo;s colour, edit your details, then export a
-          print-ready card. Drag the card to spin it.
-        </p>
-      </header>
-
-      <div className={styles.stageRow}>
-        <div className={styles.cardCol}>
+    <div className={styles.tool} style={accent(accentHex)}>
+      {/* HERO — the business card in the /work studio environment, filling the viewport */}
+      <section className={styles.hero} aria-label={t("ariaLabel")}>
+        <div className={styles.scene}>
           <BusinessCard3D frontSvg={faces.front} backSvg={faces.back} />
-          <p className={styles.hint}>drag to spin</p>
         </div>
-        <div className={styles.gridCol}>
+
+        <header className={styles.heroHead}>
+          <span className="eyebrow">{t("eyebrow")}</span>
+          <h1 className={styles.title}>
+            {t.rich("title", {
+              accent: (c) => <em className="accentWord">{c}</em>,
+            })}
+          </h1>
+        </header>
+
+        {/* the ring selector — a SMALL Apple-Watch cluster floating in-scene (no container):
+            centre-right on desktop, bottom-centre on mobile. Tap a ring to recolour the card. */}
+        <div className={styles.selector}>
           <RingGrid
+            layout="orb"
             seedFor={seedFor}
             colorFor={accentHexForSeed}
             selectedSeed={model.seed}
             onSelect={selectRing}
           />
-          <p className={styles.hint}>pan to browse · tap to choose</p>
         </div>
-      </div>
 
-      <EditPanel
+        <HeroScrollIndicator variant="blend" />
+      </section>
+
+      {/* FORM — refined, flat details + export */}
+      <section className={styles.formSection}>
+        <EditPanel model={model} onChange={onChange} onExport={openExport} />
+      </section>
+
+      <ExportDialog
+        open={exportOpen}
+        onClose={closeExport}
         model={model}
-        onChange={onChange}
-        accentHex={accentHexForSeed(model.seed)}
-        accentName={accentNameForSeed(model.seed)}
-        onExportSvg={exportSvg}
-        onExportPdf={exportPdf}
-        busy={busy}
+        assets={assets}
+        faces={faces}
+        spec={exportSpec}
+        setSpec={setExportSpec}
       />
     </div>
   );

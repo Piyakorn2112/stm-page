@@ -17,6 +17,7 @@
  */
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import { NAV_ICON_SIZE, NAV_ICON_STROKE, NAV_ITEMS, PRODUCTS, productAnchor, type NavItem } from "./navLinks";
 import mega from "./mega.module.css";
@@ -54,6 +55,7 @@ export default function NavInner({
   const productsPanelRef = useRef<HTMLDivElement>(null);
   const megaRef = useRef<HTMLDivElement>(null);
   const megaInnerRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("nav");
 
   // Desktop mega: animate the MEASURED height (0 ↔ content) so the full ease-standard curve maps
   // onto the visible expand — identical feel to the mobile slider (a max-height overshoot reads linear).
@@ -92,7 +94,7 @@ export default function NavInner({
           <button
             type="button"
             className={styles.navBurger}
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={open ? t("closeMenu") : t("openMenu")}
             aria-expanded={open}
             onClick={toggle}
           >
@@ -104,13 +106,14 @@ export default function NavInner({
         <div ref={sliderRef} className={mega.slider} data-products={mobileProducts ? "1" : "0"}>
           <div ref={mainPanelRef} className={mega.panelMain}>
             {NAV_ITEMS.map((item) => {
-              const { label, Icon } = item;
+              const { labelKey, Icon } = item;
+              const label = t(labelKey);
               const current = isCurrent?.(item) ?? false;
               // CTA → tight outlined pill with an always-visible icon
               if (item.cta) {
                 return (
                   <Link
-                    key={label}
+                    key={labelKey}
                     className={styles.navCta}
                     href={hrefFor(item)}
                     aria-current={current ? "page" : undefined}
@@ -135,14 +138,14 @@ export default function NavInner({
               );
               if (!item.route) {
                 return (
-                  <a key={label} className={cls} href={hrefFor(item)} onClick={navTo}>
+                  <a key={labelKey} className={cls} href={hrefFor(item)} onClick={navTo}>
                     {inner}
                   </a>
                 );
               }
               return (
                 <Link
-                  key={label}
+                  key={labelKey}
                   className={cls}
                   href={hrefFor(item)}
                   aria-current={current ? "page" : undefined}
@@ -169,7 +172,7 @@ export default function NavInner({
           {/* mobile products panel (slid in beside the main panel) */}
           <div ref={productsPanelRef} className={mega.panelProducts} aria-hidden={!mobileProducts}>
             <button type="button" className={mega.back} onClick={() => setMobileProducts(false)}>
-              <ChevronLeft size={18} strokeWidth={2} aria-hidden /> Product
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden /> {t("product")}
             </button>
             {/* big bold solid product names — same treatment as the desktop sheet, plus a chevron */}
             {PRODUCTS.map((p) => (
@@ -179,7 +182,7 @@ export default function NavInner({
               </Link>
             ))}
             <Link className={mega.mViewAll} href={ALL_PRODUCTS_HREF} onClick={navTo}>
-              View all products
+              {t("viewAllProducts")}
             </Link>
           </div>
         </div>
@@ -205,7 +208,7 @@ export default function NavInner({
             ))}
           </div>
           <Link className={mega.viewAll} href={ALL_PRODUCTS_HREF} onClick={navTo}>
-            View all products
+            {t("viewAllProducts")}
           </Link>
         </div>
       </div>

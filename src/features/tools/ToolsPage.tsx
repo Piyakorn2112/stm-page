@@ -1,42 +1,40 @@
-import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import Nav from "@/components/ui/Nav/Nav";
 import Footer from "@/components/ui/Footer/Footer";
+import LocaleReadLink from "@/components/ui/LocaleReadLink/LocaleReadLink";
 import { toolsNavConfig } from "./nav.config";
 import styles from "./tools.module.css";
 
 /** The /tools index — a quiet list of the studio's generative utilities. */
-const TOOLS = [
-  {
-    href: "/tools/business-card",
-    name: "Business card",
-    desc: "Pick a ring, make it yours, spin it in 3D, and export a print-ready card.",
-  },
-];
+const TOOLS = [{ id: "businessCard", href: "/tools/business-card" }] as const;
 
 export default function ToolsPage() {
+  const t = useTranslations("tools");
   return (
     <>
       <Nav config={toolsNavConfig} />
       <main className={styles.main}>
         <section className="section">
           <div className="container">
-            <span className="eyebrow">Tools</span>
-            <h1 className="heading">Generative tools</h1>
-            <p className="lede">Small studio utilities built on the STM ring engine.</p>
+            <span className="eyebrow">{t("eyebrow")}</span>
+            <h1 className="heading">{t("heading")}</h1>
+            <p className="lede">{t("lede")}</p>
             <ul className={styles.toolList}>
-              {TOOLS.map((t) => (
-                <li key={t.href}>
-                  <Link className={styles.toolCard} href={t.href}>
+              {TOOLS.map((tool) => (
+                <li key={tool.href}>
+                  <Link className={styles.toolCard} href={tool.href}>
                     <span className={styles.toolName}>
-                      {t.name}
+                      {t(`items.${tool.id}.name`)}
                       <ArrowUpRight size={18} strokeWidth={2} aria-hidden />
                     </span>
-                    <span className={styles.toolDesc}>{t.desc}</span>
+                    <span className={styles.toolDesc}>{t(`items.${tool.id}.desc`)}</span>
                   </Link>
                 </li>
               ))}
             </ul>
+            <LocaleReadLink />
           </div>
         </section>
       </main>

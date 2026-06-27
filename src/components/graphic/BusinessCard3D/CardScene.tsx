@@ -1,14 +1,13 @@
 "use client";
 
 /**
- * CardScene — a freestanding, double-sided matte-paper business card in 3D.
- *
- * Unlike the lanyard badge this has NO rope physics: it's a paper card you grab and
- * spin. A lightweight custom trackball gives it real inertia — drag to spin, release
- * to let momentum carry and decay, and at rest it drifts in a slow idle rotation
- * (suppressed under prefers-reduced-motion). Both faces are textured from the card's
- * own SVG (rasterised to a CanvasTexture); the stock is a high-roughness paper with a
- * faint fibre bump and almost no specular, lit by a soft studio key/fill/rim.
+ * CardScene — the business card in the SAME studio environment as the /work employee badge
+ * (LanyardCard): a soft radial-vignette backdrop wall + a shadow-catcher, a clean key /
+ * drifting warm "shaft" gobo / fill / two-tone rim rig, FitCamera + a 90fps throttle, and a
+ * light/dark studio theme. The lanyard rope/clip/slot are dropped (a slot would cut the
+ * card's full-bleed design); instead the card is a freestanding matte slab you grab to spin
+ * (custom trackball inertia + a slow idle drift). Both faces are textured from the card's own
+ * SVG (buildFaces). Client-only (heavy WebGL).
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -20,11 +19,21 @@ import styles from "./styles.module.css";
 const ASPECT = 90 / 54;
 const CARD_W = 3.6;
 const CARD_H = CARD_W / ASPECT; // 2.16
-const CARD_D = 0.011; // paper-thin (even thinner)
-const CARD_R = 0.033; // very small radius (a paper card, barely rounded)
-const BEVEL = 0.0022;
-const FACE_Z = CARD_D / 2 + 0.0011;
+const CARD_D = 0.013; // paper-thin (a real ~0.35mm business card, not a slab)
+const CARD_R = 0.022; // a small cut-paper corner (crisp, not a rounded badge)
+const BEVEL = 0.0014;
+const FACE_Z = CARD_D / 2 + 0.001;
+// how much room around the card the camera frames. The card is LANDSCAPE, so the width is
+// fit tightly (the card stays prominent even on tall/portrait viewports) while the height gets
+// more air. Without this, a wide card on a tall screen fits-by-width tiny + looks lost.
+const FRAME_W = 1.52;
+const FRAME_H = 2.1;
+const WALL_W = 48;
+const WALL_H = 40;
 
+type Theme = { wall: string; wall2: string; key: string; fill: string; ground: string };
+
+/* ── card geometry: bevelled body + UV-mapped flat faces ── */
 function roundedRectShape(w: number, h: number, r: number) {
   const s = new THREE.Shape();
   const x = -w / 2;
@@ -40,19 +49,17 @@ function roundedRectShape(w: number, h: number, r: number) {
   s.quadraticCurveTo(x, y, x + r, y);
   return s;
 }
-
 function faceGeo(): THREE.ShapeGeometry {
   const g = new THREE.ShapeGeometry(roundedRectShape(CARD_W, CARD_H, CARD_R), 28);
   const pos = g.attributes.position;
   const uv = new Float32Array(pos.count * 2);
   for (let i = 0; i < pos.count; i++) {
     uv[i * 2] = (pos.getX(i) + CARD_W / 2) / CARD_W;
-    uv[i * 2 + 1] = (pos.getY(i) + CARD_H / 2) / CARD_H; // CanvasTexture flipY handles top-down
+    uv[i * 2 + 1] = (pos.getY(i) + CARD_H / 2) / CARD_H;
   }
   g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
   return g;
 }
-
 function buildGeo() {
   const shape = roundedRectShape(CARD_W, CARD_H, CARD_R);
   const body = new THREE.ExtrudeGeometry(shape, {
@@ -60,8 +67,8 @@ function buildGeo() {
     bevelEnabled: true,
     bevelThickness: BEVEL,
     bevelSize: BEVEL,
-    bevelSegments: 2,
-    curveSegments: 24,
+    bevelSegments: 3,
+    curveSegments: 28,
   });
   body.computeBoundingBox();
   const bb = body.boundingBox!;
@@ -70,40 +77,31 @@ function buildGeo() {
   return { body, face: faceGeo() };
 }
 
-// procedural PAPER NORMAL MAP (the Blender approach: build a fibre height-field, then
-// derive per-texel normals from its gradient and pack xyz→rgb). Gives real matte paper
-// tooth that reacts directionally to light — unlike a flat grey bump map.
+// procedural PAPER NORMAL MAP — fibre tooth that reacts to the raking light.
 function makePaperNormalMap(): THREE.CanvasTexture {
   const n = 512;
   let s = 9241;
   const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
-
-  // 1) height field: fine grain + a faint directional fibre (paper grain direction)
   let h = new Float32Array(n * n);
   for (let i = 0; i < n * n; i++) h[i] = rnd();
-  // a couple of light box-blurs soften pure noise into a paper tooth
   for (let pass = 0; pass < 2; pass++) {
     const out = new Float32Array(n * n);
-    for (let y = 0; y < n; y++) {
+    for (let y = 0; y < n; y++)
       for (let x = 0; x < n; x++) {
         let sum = 0;
         for (let dy = -1; dy <= 1; dy++)
           for (let dx = -1; dx <= 1; dx++) sum += h[((y + dy + n) % n) * n + ((x + dx + n) % n)];
         out[y * n + x] = sum / 9;
       }
-    }
     h = out;
   }
-  for (let y = 0; y < n; y++)
-    for (let x = 0; x < n; x++) h[y * n + x] += Math.sin(y * 0.6) * 0.05; // faint fibre streaks
-
-  // 2) normals from the height gradient → RGB
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) h[y * n + x] += Math.sin(y * 0.6) * 0.05;
   const c = document.createElement("canvas");
   c.width = c.height = n;
   const ctx = c.getContext("2d")!;
   const img = ctx.createImageData(n, n);
-  const strength = 2.2;
-  for (let y = 0; y < n; y++) {
+  const strength = 2.0;
+  for (let y = 0; y < n; y++)
     for (let x = 0; x < n; x++) {
       const hl = h[y * n + ((x - 1 + n) % n)];
       const hr = h[y * n + ((x + 1) % n)];
@@ -118,17 +116,92 @@ function makePaperNormalMap(): THREE.CanvasTexture {
       img.data[i + 2] = (1 / len) * 0.5 * 255 + 127;
       img.data[i + 3] = 255;
     }
-  }
   ctx.putImageData(img, 0, 0);
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(3, 2);
-  t.colorSpace = THREE.NoColorSpace; // normal data is linear, not sRGB
+  t.colorSpace = THREE.NoColorSpace;
   return t;
 }
 
-const BODY_NS = new THREE.Vector2(0.28, 0.28);
-const FACE_NS = new THREE.Vector2(0.12, 0.12);
+// studio backdrop — a soft radial vignette so the card sits in light, not on a flat slab.
+function makeWall(center: string, edge: string): THREE.CanvasTexture {
+  const S = 1024;
+  const c = document.createElement("canvas");
+  c.width = c.height = S;
+  const x = c.getContext("2d")!;
+  const g = x.createRadialGradient(S * 0.5, S * 0.42, S * 0.05, S * 0.5, S * 0.5, S * 0.7);
+  g.addColorStop(0, center);
+  g.addColorStop(1, edge);
+  x.fillStyle = g;
+  x.fillRect(0, 0, S, S);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// "window-shaft" gobo — warm sunlight raking through tall gaps; a soft, natural cookie for the
+// drifting shaft light (one motivated source). Seeded ⇒ deterministic.
+const GOBO_ANGLE = 0.52;
+function makeGobo(): THREE.CanvasTexture {
+  const S = 1024;
+  const c = document.createElement("canvas");
+  c.width = c.height = S;
+  const x = c.getContext("2d")!;
+  x.fillStyle = "#070708";
+  x.fillRect(0, 0, S, S);
+  let seed = 0x77a13b;
+  const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const shard = (cx: number, cy: number, w: number, h: number, b: number) => {
+    x.save();
+    x.translate(cx, cy);
+    x.scale(1, h / w);
+    const g = x.createRadialGradient(0, 0, 0, 0, 0, w);
+    g.addColorStop(0, `rgba(255,255,255,${b})`);
+    g.addColorStop(0.62, `rgba(255,255,255,${b})`);
+    g.addColorStop(0.86, `rgba(255,255,255,${b * 0.28})`);
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    x.fillStyle = g;
+    x.beginPath();
+    x.arc(0, 0, w, 0, Math.PI * 2);
+    x.fill();
+    x.restore();
+  };
+  x.save();
+  x.translate(S / 2, S / 2);
+  x.rotate(GOBO_ANGLE);
+  x.translate(-S / 2, -S / 2);
+  for (let lx = -S * 0.3; lx < S * 1.3; ) {
+    const laneW = S * (0.04 + rnd() * 0.06);
+    const bright = 0.7 + rnd() * 0.3;
+    for (let ly = -S * 0.3; ly < S * 1.3; ) {
+      if (rnd() > 0.12) {
+        const segH = laneW * (5 + rnd() * 9);
+        shard(lx + (rnd() - 0.5) * laneW * 0.6, ly + segH / 2, laneW, segH, bright * (0.62 + rnd() * 0.38));
+        ly += segH * (0.85 + rnd() * 0.4);
+      } else {
+        ly += laneW * (1.5 + rnd() * 2);
+      }
+    }
+    lx += laneW + S * (0.07 + rnd() * 0.07);
+  }
+  x.restore();
+  for (let i = 0; i < 4; i++) {
+    const sx = rnd() * S;
+    const sy = rnd() * S;
+    const rr = S * (0.1 + rnd() * 0.12);
+    const g = x.createRadialGradient(sx, sy, 0, sx, sy, rr);
+    g.addColorStop(0, `rgba(7,7,8,${0.3 + rnd() * 0.3})`);
+    g.addColorStop(1, "rgba(7,7,8,0)");
+    x.fillStyle = g;
+    x.beginPath();
+    x.arc(sx, sy, rr, 0, Math.PI * 2);
+    x.fill();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
 
 // rasterise a (self-contained) SVG string to a CanvasTexture; updates in place on change
 function useSvgTexture(svg: string): THREE.Texture | null {
@@ -152,7 +225,6 @@ function useSvgTexture(svg: string): THREE.Texture | null {
       URL.revokeObjectURL(url);
       setTex((prev) => {
         if (prev) {
-          // same texture object, new image → three repaints via needsUpdate (no re-render)
           prev.image = canvas;
           prev.needsUpdate = true;
           return prev;
@@ -171,7 +243,57 @@ function useSvgTexture(svg: string): THREE.Texture | null {
   return tex;
 }
 
-const DAMP = 0.94; // momentum retention per 1/60s
+// auto-fit the framed card (FRAME × the card) into the viewport
+function FitCamera() {
+  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const size = useThree((s) => s.size);
+  useEffect(() => {
+    const aspect = size.width / Math.max(1, size.height);
+    const vfov = (camera.fov * Math.PI) / 180;
+    const halfH = (CARD_H / 2) * FRAME_H;
+    const halfW = (CARD_W / 2) * FRAME_W;
+    const need = Math.max(halfH, halfW / aspect);
+    camera.position.set(0, 0, need / Math.tan(vfov / 2));
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+  }, [camera, size]);
+  return null;
+}
+
+// frame-rate cap at maxFps (priority useFrame takes over rendering)
+function RenderThrottle({ maxFps }: { maxFps: number }) {
+  const acc = useRef(1 / maxFps);
+  const minDelta = 1 / maxFps;
+  useFrame(({ gl, scene, camera }, delta) => {
+    acc.current += delta;
+    if (acc.current >= minDelta) {
+      acc.current %= minDelta;
+      gl.render(scene, camera);
+    }
+  }, 1);
+  return null;
+}
+
+// drifting warm "shaft" light carrying the gobo — the one animated light (sways like sun
+// through a swaying canopy); additive, casts no shadow.
+function ShaftLight({ gobo, color, intensity }: { gobo: THREE.Texture; color: string; intensity: number }) {
+  const ref = useRef<THREE.SpotLight>(null);
+  useFrame((s) => {
+    const k = ref.current;
+    if (!k) return;
+    const t = s.clock.elapsedTime;
+    k.position.set(
+      6 + Math.sin(t * 0.16) * 0.8 + Math.sin(t * 0.41 + 1.3) * 0.3,
+      8.5 + Math.cos(t * 0.12) * 0.5,
+      4.5 + Math.sin(t * 0.23 + 2.1) * 0.3,
+    );
+  });
+  return (
+    <spotLight ref={ref} position={[6, 8.5, 4.5]} angle={0.95} penumbra={1} intensity={intensity} decay={0} distance={40} color={color} map={gobo} />
+  );
+}
+
+const DAMP = 0.94;
 const Y = new THREE.Vector3(0, 1, 0);
 const X = new THREE.Vector3(1, 0, 0);
 
@@ -188,10 +310,9 @@ function Card({ frontSvg, backSvg, reduced }: { frontSvg: string; backSvg: strin
   const dq = useRef(new THREE.Quaternion());
   const axis = useRef(new THREE.Vector3());
 
-  // pointer trackball on the canvas element
   useEffect(() => {
     const el = gl.domElement;
-    const ROT = 0.01; // rad per px
+    const ROT = 0.01;
     const down = (e: PointerEvent) => {
       drag.current = { on: true, x: e.clientX, y: e.clientY, t: performance.now() };
       omega.current.set(0, 0, 0);
@@ -242,7 +363,6 @@ function Card({ frontSvg, backSvg, reduced }: { frontSvg: string; backSvg: strin
     if (!g) return;
     const dt = Math.min(delta, 0.05);
     if (drag.current.on) return;
-    // momentum
     const sp = omega.current.length();
     if (sp > 1e-4) {
       axis.current.copy(omega.current).normalize();
@@ -250,50 +370,28 @@ function Card({ frontSvg, backSvg, reduced }: { frontSvg: string; backSvg: strin
       g.quaternion.premultiply(dq.current);
       omega.current.multiplyScalar(Math.pow(DAMP, dt * 60));
     }
-    // gentle idle auto-spin about Y (suppressed for reduced motion)
     if (!reduced) {
-      dq.current.setFromAxisAngle(Y, 0.22 * dt);
+      dq.current.setFromAxisAngle(Y, 0.2 * dt);
       g.quaternion.premultiply(dq.current);
     }
   });
 
   return (
     <group ref={group}>
-      <mesh geometry={geo.body}>
-        <meshStandardMaterial
-          color="#f6f5f1"
-          roughness={0.9}
-          metalness={0}
-          normalMap={normal}
-          normalScale={BODY_NS}
-          envMapIntensity={0.18}
-        />
+      <mesh geometry={geo.body} castShadow receiveShadow>
+        <meshStandardMaterial color="#f4f3ef" roughness={0.88} metalness={0} normalMap={normal} normalScale={new THREE.Vector2(0.22, 0.22)} envMapIntensity={0.25} />
       </mesh>
       {frontTex && (
-        <mesh geometry={geo.face} position={[0, 0, FACE_Z]}>
-          <meshStandardMaterial map={frontTex} roughness={0.8} metalness={0} normalMap={normal} normalScale={FACE_NS} envMapIntensity={0.1} />
+        <mesh geometry={geo.face} position={[0, 0, FACE_Z]} castShadow>
+          <meshStandardMaterial map={frontTex} roughness={0.82} metalness={0} normalMap={normal} normalScale={new THREE.Vector2(0.1, 0.1)} envMapIntensity={0.08} toneMapped={false} />
         </mesh>
       )}
       {backTex && (
-        <mesh geometry={geo.face} position={[0, 0, -FACE_Z]} rotation={[0, Math.PI, 0]}>
-          <meshStandardMaterial map={backTex} roughness={0.8} metalness={0} normalMap={normal} normalScale={FACE_NS} envMapIntensity={0.1} />
+        <mesh geometry={geo.face} position={[0, 0, -FACE_Z]} rotation={[0, Math.PI, 0]} castShadow>
+          <meshStandardMaterial map={backTex} roughness={0.82} metalness={0} normalMap={normal} normalScale={new THREE.Vector2(0.1, 0.1)} envMapIntensity={0.08} toneMapped={false} />
         </mesh>
       )}
     </group>
-  );
-}
-
-function Lights({ dark }: { dark: boolean }) {
-  return (
-    <>
-      <ambientLight intensity={dark ? 0.95 : 1.1} />
-      <hemisphereLight intensity={0.55} color={dark ? "#cfd6ff" : "#ffffff"} groundColor={dark ? "#15171e" : "#e7e7ec"} />
-      <spotLight position={[4.5, 6, 6]} angle={0.85} penumbra={1} intensity={dark ? 4.2 : 3.6} decay={0} color="#fff7ee" />
-      <directionalLight position={[-5, 1.5, 4]} intensity={dark ? 1.15 : 1.0} color="#eef2ff" />
-      <directionalLight position={[0, 2.5, -5]} intensity={dark ? 1.9 : 1.35} color={dark ? "#aab6ff" : "#ffffff"} />
-      {/* head-on fill so the face that's toward the camera reads bright */}
-      <directionalLight position={[0, 0.5, 8]} intensity={dark ? 0.85 : 0.7} color="#ffffff" />
-    </>
   );
 }
 
@@ -302,6 +400,7 @@ export default function CardScene({ frontSvg, backSvg }: { frontSvg: string; bac
   const [visible, setVisible] = useState(true);
   const [dark, setDark] = useState(false);
   const [reduced, setReduced] = useState(false);
+  const [ctxKey, setCtxKey] = useState(0);
 
   useEffect(() => {
     const d = window.matchMedia("(prefers-color-scheme: dark)");
@@ -326,16 +425,72 @@ export default function CardScene({ frontSvg, backSvg }: { frontSvg: string; bac
     return () => io.disconnect();
   }, []);
 
+  // same studio theme as the /work badge — a deep, product-shot backdrop sweep + warm/cool tones
+  const theme: Theme = dark
+    ? { wall: "#2b2d35", wall2: "#191a20", key: "#fbfcff", fill: "#eef0f4", ground: "#191a20" }
+    : { wall: "#dcd6cc", wall2: "#c7c1b6", key: "#fffaf7", fill: "#f4f5f7", ground: "#e8e4dd" };
+  const gobo = useMemo(() => makeGobo(), []);
+  const wallTex = useMemo(() => makeWall(theme.wall, theme.wall2), [theme.wall, theme.wall2]);
+
   return (
     <div ref={wrap} className={styles.stage}>
       <Canvas
-        camera={{ position: [0, 0, 7], fov: 30 }}
+        key={ctxKey}
+        shadows={{ type: THREE.PCFShadowMap }}
+        camera={{ position: [0, 0, 11], fov: 30 }}
         gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
         dpr={[1, 2]}
         frameloop={visible ? "always" : "never"}
-        style={{ touchAction: "none", cursor: "grab" }}
+        style={{ width: "100%", height: "100%", touchAction: "none", cursor: "grab" }}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener(
+            "webglcontextlost",
+            (e) => {
+              e.preventDefault();
+              setCtxKey((k) => k + 1);
+            },
+            { once: true },
+          );
+        }}
       >
-        <Lights dark={dark} />
+        <FitCamera />
+        <RenderThrottle maxFps={90} />
+
+        <mesh position={[0, 0, -5]}>
+          <planeGeometry args={[WALL_W, WALL_H]} />
+          <meshStandardMaterial map={wallTex} roughness={0.97} metalness={0} />
+        </mesh>
+        {/* shadow-catcher just behind the card so its drop shadow reads without darkening the wall */}
+        <mesh position={[0, 0, -1.2]} receiveShadow>
+          <planeGeometry args={[20, 22]} />
+          <shadowMaterial opacity={0.26} />
+        </mesh>
+
+        <ambientLight intensity={0.36} />
+        <hemisphereLight intensity={0.3} color={theme.key} groundColor={theme.ground} />
+        {/* KEY — clean studio softbox raking from the upper-side */}
+        <spotLight
+          position={[7.5, 8, 4.5]}
+          angle={0.95}
+          penumbra={1}
+          intensity={3.2}
+          decay={0}
+          distance={40}
+          color={theme.key}
+          castShadow
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-bias={-0.0002}
+          shadow-radius={12}
+        />
+        {/* drifting warm shafts (the only animated light) */}
+        <ShaftLight gobo={gobo} color="#ffe6bf" intensity={dark ? 2.2 : 3.0} />
+        {/* soft FILL from the opposite lower-side */}
+        <spotLight position={[-6.5, 2.5, 6]} angle={0.95} penumbra={1} intensity={1.7} decay={0} color={theme.fill} />
+        {/* two-tone RIM from behind so the edges separate from the wall */}
+        <directionalLight position={[5, 6, -5]} intensity={dark ? 1.5 : 1.05} color={dark ? "#dde6ff" : "#e9f0ff"} />
+        <directionalLight position={[-5.5, 4, -4.5]} intensity={dark ? 1.05 : 0.7} color={dark ? "#fff0df" : "#fff2e6"} />
+
         <Card frontSvg={frontSvg} backSvg={backSvg} reduced={reduced} />
       </Canvas>
     </div>

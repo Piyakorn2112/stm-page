@@ -6,28 +6,31 @@
  * -aware via CSS vars; no animation (matches the calm, museum-like page).
  */
 
+import { useTranslations } from "next-intl";
+
 const PILLARS = [110, 210, 310]; // x of each team
 const BEAMS = [
-  { y: 104, label: "Design" },
-  { y: 154, label: "Engineering" },
-  { y: 204, label: "System" },
-];
+  { y: 104, key: "design" },
+  { y: 154, key: "engineering" },
+  { y: 204, key: "system" },
+] as const;
 const TOP = 64; // team cluster height
 const BOTTOM = 244;
 const DISC = ["var(--orange)", "var(--blue)", "var(--indigo)"]; // the three disciplines
 
 export default function AlignmentDiagram({ className }: { className?: string }) {
+  const t = useTranslations("work");
   return (
     <svg
       className={className}
       viewBox="0 0 420 290"
       role="img"
-      aria-label="Three independent team pillars connected by shared horizontal alignment layers"
+      aria-label={t("align.diagramAria")}
       style={{ width: "100%", height: "auto", display: "block" }}
     >
       {/* shared alignment beams (the layers every team aligns to) */}
       {BEAMS.map((b) => (
-        <g key={b.label}>
+        <g key={b.key}>
           <line x1={58} y1={b.y} x2={372} y2={b.y} stroke="var(--border-strong)" strokeWidth={1.5} strokeLinecap="round" />
           <text
             x={58}
@@ -35,10 +38,10 @@ export default function AlignmentDiagram({ className }: { className?: string }) 
             textAnchor="start"
             fontSize={10.5}
             letterSpacing={0.6}
-            fontFamily="ui-monospace, 'SF Mono', Menlo, monospace"
+            fontFamily="ui-monospace, 'SF Mono', Menlo, var(--font-thai-mono), monospace"
             fill="var(--faint)"
           >
-            {b.label}
+            {t(`align.diagram.${b.key}`)}
           </text>
         </g>
       ))}

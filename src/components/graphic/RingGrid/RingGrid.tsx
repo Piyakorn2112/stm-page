@@ -1,20 +1,25 @@
 "use client";
 
 /**
- * RingGrid — an Apple-Watch-style honeycomb of rings you can pan infinitely in any
- * direction to browse seeds and pick one.
+ * RingGrid — a pannable field of real STM rings you browse to pick a seed. Two layouts:
  *
- * The layout is the spherical-fisheye honeycomb (the focus point sits at the centre,
- * biggest; rings compress + shrink toward the rim). Panning slides a FOCUS POINT over
- * an unbounded integer lattice, so any (col,row) is reachable — effectively infinite.
- * Each cell is the REAL ring (full charge colour, from `exportThumbnailSVG`) rasterised
- * once and cached as an LRU sprite, so a frame is just a few hundred `drawImage`s. The
- * rAF loop runs ONLY while moving (drag / momentum / snap); at rest the canvas is
- * static, so an idle grid costs nothing. Tap a ring to select it (it snaps to centre).
+ *  • "cover" (default) — an Apple-Watch spherical-fisheye HONEYCOMB filling its box. Pan in
+ *    any direction over an unbounded integer lattice (so any seed is reachable). Tap a ring
+ *    to select it + snap it to the centre.
+ *  • "reel" — a single horizontal ROW: a tactile carousel. Swipe left/right with momentum;
+ *    the CENTRED ring is biggest and LIVE-selected (drives the caller as you scrub); it
+ *    settles snapped to a ring. A compact colour/ring selector to sit beneath a hero.
+ *
+ * Each cell is the REAL ring (full charge colour, `exportThumbnailSVG`) rasterised once
+ * OFF THE MAIN THREAD (`createImageBitmap`), concurrency-limited + LRU-cached, so a frame is
+ * just a few `drawImage`s. The rAF loop runs ONLY while moving; at rest the canvas is static
+ * (~0 cost). This is what keeps panning silky with no decode stutter.
  */
 
 import { useEffect, useRef } from "react";
 import { exportThumbnailSVG, DARK_BASE } from "@stm-ring";
+
+type Layout = "cover" | "reel" | "orb";
 
 type Props = {
   seedFor: (col: number, row: number) => string;
@@ -22,22 +27,47 @@ type Props = {
   selectedSeed?: string;
   onSelect: (seed: string) => void;
   className?: string;
+  /** "cover" — honeycomb fisheye filling the box (default). "reel" — a single horizontal
+   *  carousel. "orb" — a self-contained SPHERE whose limb fits INSIDE the box: rings shrink to
+   *  nothing at the round edge (no container clipping) and a strong size falloff pops the
+   *  centre. A small Apple-Watch ball you tap to pick. */
+  layout?: Layout;
 };
 
 // honeycomb + fisheye constants (CSS px / sphere math from the hero StructureGrid)
-const PITCH = 156; // centre hex pitch (wider ⇒ fewer, larger rings on screen)
-const ROW_P = PITCH * 0.866;
-const RING = 134; // centre ring diameter (much bigger)
 const CORNER_SCALE = 0.28; // rim rings shrink to ~28% ⇒ a deep fisheye
 const EDGE_PHI = Math.acos(CORNER_SCALE);
-const SIZE_GAMMA = 2.4; // stronger falloff ⇒ the centre rings pop a lot bigger
 const SPRITE_CAP = 420;
 const GRID_SEG = 112; // ring detail for the small grid sprites (they're tiny — keep it cheap)
 const GRID_PIECES = 36;
 const MAX_INFLIGHT = 6; // concurrent sprite rasterisations (keeps the main thread free)
 const DARK_RING_BASE = ["#E7EBFC", "#ABB1D4"]; // light wire base so rings read on a dark page
 
-export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, className }: Props) {
+// cover honeycomb — large rings, deep falloff so the centre pops
+const COVER_PITCH = 156;
+const COVER_RING = 134;
+const COVER_GAMMA = 2.4;
+// orb — a self-contained SPHERE (limb fits the box). Small rings + a STRONG falloff (gamma) ⇒
+// a big centre ring with a halo shrinking to NOTHING at the round limb (so it never clips the
+// container, unlike "cover" which bulges past the rect).
+const ORB_RING = 72;
+const ORB_PITCH = 66;
+const ORB_GAMMA = 2.8; // cranked size difference — the centre pops hard, the rim vanishes
+const ORB_LIMB_FRAC = 0.92; // limb radius as a fraction of min(cx,cy) — sits INSIDE the box
+const ORB_PHI_CAP = 0.985; // stop a hair short of the pole (avoid the singular crowd)
+// reel carousel — smaller rings, tighter pitch, GENTLER falloff so ~5–7 rings stay in view
+const REEL_PITCH = 118;
+const REEL_RING = 98;
+const REEL_GAMMA = 1.5;
+
+export default function RingGrid({
+  seedFor,
+  colorFor,
+  selectedSeed,
+  onSelect,
+  className,
+  layout = "cover",
+}: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   // live props for the imperative loop — kept fresh in an effect (not during render)
@@ -45,11 +75,13 @@ export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, cl
   const seedRef = useRef(seedFor);
   const colorRef = useRef(colorFor);
   const selRef = useRef(selectedSeed);
+  const layoutRef = useRef(layout);
   useEffect(() => {
     onSel.current = onSelect;
     seedRef.current = seedFor;
     colorRef.current = colorFor;
     selRef.current = selectedSeed;
+    layoutRef.current = layout;
   });
 
   useEffect(() => {
@@ -60,13 +92,24 @@ export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, cl
     let cssW = 0;
     let cssH = 0;
 
-    // focus point over the lattice + velocity (flat px)
-    let fx = PITCH * 0.5;
-    let fy = ROW_P * 0.5;
+    // captured on mount (layout is a static structural choice — never toggles for a tool)
+    const REEL = layoutRef.current === "reel";
+    const ORB = layoutRef.current === "orb";
+    const PITCH = REEL ? REEL_PITCH : ORB ? ORB_PITCH : COVER_PITCH;
+    const ROW_P = PITCH * 0.866;
+    const RING = REEL ? REEL_RING : ORB ? ORB_RING : COVER_RING;
+    const GAMMA = REEL ? REEL_GAMMA : ORB ? ORB_GAMMA : COVER_GAMMA;
+
+    // focus point over the lattice + velocity (flat px). reel + orb rest ON a ring (col 0 /
+    // row 0) so one ring sits dominant in the centre; cover rests between rings.
+    let fx = REEL || ORB ? 0 : PITCH * 0.5;
+    let fy = REEL || ORB ? 0 : ROW_P * 0.5;
     let vx = 0;
     let vy = 0;
     // snap-to-centre target
     let snap: { x: number; y: number } | null = null;
+    // reel: last live-selected centre column (dedupes onSelect while scrubbing)
+    let reelCol = NaN;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const darkMq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -164,18 +207,32 @@ export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, cl
       pending.clear();
       queue.length = 0;
     }
-    // prefetch a ring of cells just beyond the visible limb so panning reveals cached art
-    function prefetch() {
+
+    // sphere geometry — the projection radius + the lattice cull radius + max polar angle.
+    // cover/reel: the sphere is sized off the CORNER so it bulges past the rect (rim rings ~28%).
+    // orb: the sphere LIMB sits inside the box (min half-dim) so rings shrink to ~0 at the round
+    // edge ⇒ a self-contained ball that never clips the container.
+    function geom() {
       const cx = cssW / 2;
       const cy = cssH / 2;
+      if (ORB) {
+        const sphereR = Math.min(cx, cy) * ORB_LIMB_FRAC;
+        const maxPhi = (Math.PI / 2) * ORB_PHI_CAP;
+        return { cx, cy, sphereR, flatMax: sphereR * maxPhi, maxPhi };
+      }
       const cornerD = Math.hypot(cx, cy) + RING * 0.5;
       const sphereR = cornerD / Math.sin(EDGE_PHI);
-      const flatMax = sphereR * EDGE_PHI * 1.4;
+      return { cx, cy, sphereR, flatMax: sphereR * EDGE_PHI, maxPhi: Math.PI / 2 };
+    }
+
+    // prefetch a ring of cells just beyond the visible limb so panning reveals cached art
+    function prefetch() {
+      const flatMax = geom().flatMax * 1.4;
       let budget = 30;
-      const rowMin = Math.floor((fy - flatMax) / ROW_P);
-      const rowMax = Math.ceil((fy + flatMax) / ROW_P);
+      const rowMin = REEL ? 0 : Math.floor((fy - flatMax) / ROW_P);
+      const rowMax = REEL ? 0 : Math.ceil((fy + flatMax) / ROW_P);
       for (let row = rowMin; row <= rowMax && budget > 0; row++) {
-        const stagger = (((row % 2) + 2) % 2) === 1 ? PITCH / 2 : 0;
+        const stagger = !REEL && ((row % 2) + 2) % 2 === 1 ? PITCH / 2 : 0;
         const colMin = Math.floor((fx - flatMax - stagger) / PITCH);
         const colMax = Math.ceil((fx + flatMax - stagger) / PITCH);
         for (let col = colMin; col <= colMax && budget > 0; col++) {
@@ -193,16 +250,12 @@ export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, cl
 
     // ── one frame ─────────────────────────────────────────────────────────────
     function visibleCells(): { col: number; row: number; sx: number; sy: number; scale: number; r: number }[] {
-      const cx = cssW / 2;
-      const cy = cssH / 2;
-      const cornerD = Math.hypot(cx, cy) + RING * 0.5;
-      const sphereR = cornerD / Math.sin(EDGE_PHI);
-      const flatMax = sphereR * EDGE_PHI;
+      const { cx, cy, sphereR, flatMax, maxPhi } = geom();
       const out: { col: number; row: number; sx: number; sy: number; scale: number; r: number }[] = [];
-      const rowMin = Math.floor((fy - flatMax) / ROW_P) - 1;
-      const rowMax = Math.ceil((fy + flatMax) / ROW_P) + 1;
+      const rowMin = REEL ? 0 : Math.floor((fy - flatMax) / ROW_P) - 1;
+      const rowMax = REEL ? 0 : Math.ceil((fy + flatMax) / ROW_P) + 1;
       for (let row = rowMin; row <= rowMax; row++) {
-        const stagger = (((row % 2) + 2) % 2) === 1 ? PITCH / 2 : 0;
+        const stagger = !REEL && ((row % 2) + 2) % 2 === 1 ? PITCH / 2 : 0;
         const colMin = Math.floor((fx - flatMax - stagger) / PITCH) - 1;
         const colMax = Math.ceil((fx + flatMax - stagger) / PITCH) + 1;
         for (let col = colMin; col <= colMax; col++) {
@@ -213,9 +266,9 @@ export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, cl
           const r = Math.hypot(dx, dy);
           if (r > flatMax) continue;
           const phi = r / sphereR;
-          if (phi >= Math.PI / 2) continue;
+          if (phi >= maxPhi) continue;
           const proj = sphereR * Math.sin(phi);
-          const scale = Math.cos(phi) ** SIZE_GAMMA;
+          const scale = Math.cos(phi) ** GAMMA;
           const ang = r < 1e-4 ? 0 : Math.atan2(dy, dx);
           out.push({ col, row, sx: cx + proj * Math.cos(ang), sy: cy + proj * Math.sin(ang), scale, r });
         }
@@ -223,6 +276,16 @@ export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, cl
       // paint far → near so the focused centre ring sits on top
       out.sort((a, b) => b.r - a.r);
       return out;
+    }
+
+    // reel: live-select the centred ring as the carousel moves (deduped by column)
+    function reelSync() {
+      if (!REEL) return;
+      const col = Math.round(fx / PITCH);
+      if (col !== reelCol) {
+        reelCol = col;
+        onSel.current(seedRef.current(col, 0));
+      }
     }
 
     function draw() {
@@ -251,6 +314,7 @@ export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, cl
           ctx.globalAlpha = 1;
         }
       }
+      reelSync(); // keep the card in step with the centred ring
       prefetch(); // warm the cache just beyond the edges so panning stays cached
     }
 
@@ -287,6 +351,13 @@ export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, cl
           vx *= k;
           vy *= k;
           moving = true;
+        } else if (REEL) {
+          // momentum spent → settle snapped to the nearest ring (always rest centred)
+          const tx = Math.round(fx / PITCH) * PITCH;
+          if (Math.abs(tx - fx) > 0.4) {
+            snap = { x: tx, y: 0 };
+            moving = true;
+          }
         }
       } else moving = true;
       draw();
@@ -330,10 +401,10 @@ export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, cl
       lastY = e.clientY;
       moved += Math.hypot(dx, dy);
       fx -= dx;
-      fy -= dy;
+      if (!REEL) fy -= dy; // reel pans horizontally only
       const dt = 1 / 60;
       vx = vx * 0.6 + (dx / dt) * 0.4;
-      vy = vy * 0.6 + (dy / dt) * 0.4;
+      vy = REEL ? 0 : vy * 0.6 + (dy / dt) * 0.4;
       draw();
     };
     const up = (e: PointerEvent) => {
@@ -359,8 +430,8 @@ export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, cl
           }
         }
         if (best) {
-          const stagger = (((best.row % 2) + 2) % 2) === 1 ? PITCH / 2 : 0;
-          snap = { x: best.col * PITCH + stagger, y: best.row * ROW_P };
+          const stagger = !REEL && ((best.row % 2) + 2) % 2 === 1 ? PITCH / 2 : 0;
+          snap = { x: best.col * PITCH + stagger, y: REEL ? 0 : best.row * ROW_P };
           onSel.current(seedRef.current(best.col, best.row));
         }
       } else {
@@ -418,7 +489,11 @@ export default function RingGrid({ seedFor, colorFor, selectedSeed, onSelect, cl
 
   return (
     <div ref={wrap} className={className} style={{ position: "relative", width: "100%", height: "100%" }}>
-      <canvas ref={canvas} style={{ display: "block", touchAction: "none", cursor: "grab" }} />
+      {/* reel pans horizontally only → let vertical swipes scroll the page (pan-y) */}
+      <canvas
+        ref={canvas}
+        style={{ display: "block", touchAction: layout === "reel" ? "pan-y" : "none", cursor: "grab" }}
+      />
     </div>
   );
 }

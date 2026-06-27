@@ -4,8 +4,8 @@
  * but at page scale. Accepts page-specific copy; the structural layout — centred column,
  * section-scale heading, short body, then the pill — stays constant.
  */
-import Link from "next/link";
 import { Asterisk } from "lucide-react";
+import { Link } from "@/i18n/navigation";
 import styles from "./styles.module.css";
 
 export default function CtaSection({
